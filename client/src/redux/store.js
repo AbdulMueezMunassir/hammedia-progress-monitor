@@ -13,6 +13,7 @@ export const store = configureStore({
     workers: workerSlice,
     dashboard: dashboardSlice,
   },
+  devTools: process.env.NODE_ENV !== 'production',
 });
 
 export default store;

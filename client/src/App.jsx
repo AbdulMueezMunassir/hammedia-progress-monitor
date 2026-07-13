@@ -4,16 +4,27 @@ import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 
-// Layouts
-import AdminLayout from './layouts/AdminLayout';
-import WorkerLayout from './layouts/WorkerLayout';
+// Simple test component
+const TestPage = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center gradient-bg">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-white">✅ React is Working!</h1>
+        <p className="text-white/60 mt-4">If you can see this, the app is rendering correctly.</p>
+        <p className="text-white/40 mt-2">Now checking routing...</p>
+      </div>
+    </div>
+  );
+};
 
 // Auth Pages
 import Login from './pages/auth/Login';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Admin Pages
+import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import Workers from './pages/admin/Workers';
 import Meetings from './pages/admin/Meetings';
@@ -22,15 +33,15 @@ import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
 
 // Worker Pages
+import WorkerLayout from './layouts/WorkerLayout';
 import WorkerDashboard from './pages/worker/Dashboard';
 import WorkerTasks from './pages/worker/Tasks';
 import WorkerMeetings from './pages/worker/Meetings';
 import WorkerProfile from './pages/worker/Profile';
 
-// Protected Route
-import ProtectedRoute from './components/common/ProtectedRoute';
-
 function App() {
+  console.log('App rendering...'); // This will show in console
+
   return (
     <Provider store={store}>
       <BrowserRouter>
@@ -54,11 +65,14 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute role="admin">
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute role="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<AdminDashboard />} />
             <Route path="workers" element={<Workers />} />
             <Route path="meetings" element={<Meetings />} />
@@ -68,11 +82,14 @@ function App() {
           </Route>
 
           {/* Worker Routes */}
-          <Route path="/worker" element={
-            <ProtectedRoute role="worker">
-              <WorkerLayout />
-            </ProtectedRoute>
-          }>
+          <Route 
+            path="/worker" 
+            element={
+              <ProtectedRoute role="worker">
+                <WorkerLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<WorkerDashboard />} />
             <Route path="tasks" element={<WorkerTasks />} />
             <Route path="meetings" element={<WorkerMeetings />} />
@@ -80,8 +97,8 @@ function App() {
           </Route>
 
           {/* Default */}
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </Provider>

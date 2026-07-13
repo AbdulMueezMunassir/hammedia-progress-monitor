@@ -1,0 +1,125 @@
+hammedia-progress-monitor/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   │   ├── GlassCard.jsx
+│   │   │   │   ├── ProtectedRoute.jsx
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   ├── Loader.jsx
+│   │   │   │   └── Toast.jsx
+│   │   │   ├── charts/
+│   │   │   │   ├── TaskChart.jsx
+│   │   │   │   ├── MeetingChart.jsx
+│   │   │   │   └── PerformanceChart.jsx
+│   │   │   └── modals/
+│   │   │       ├── CreateMeetingModal.jsx
+│   │   │       ├── AssignTaskModal.jsx
+│   │   │       ├── TaskProgressModal.jsx
+│   │   │       └── WorkerFormModal.jsx
+│   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   │   ├── Login.jsx
+│   │   │   │   ├── ForgotPassword.jsx
+│   │   │   │   └── ResetPassword.jsx
+│   │   │   ├── admin/
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── Workers.jsx
+│   │   │   │   ├── Meetings.jsx
+│   │   │   │   ├── Tasks.jsx
+│   │   │   │   ├── Reports.jsx
+│   │   │   │   └── Settings.jsx
+│   │   │   └── worker/
+│   │   │       ├── Dashboard.jsx
+│   │   │       ├── Tasks.jsx
+│   │   │       ├── Meetings.jsx
+│   │   │       ├── Progress.jsx
+│   │   │       └── Profile.jsx
+│   │   ├── layouts/
+│   │   │   ├── AdminLayout.jsx
+│   │   │   └── WorkerLayout.jsx
+│   │   ├── redux/
+│   │   │   ├── store.js
+│   │   │   └── slices/
+│   │   │       ├── authSlice.js
+│   │   │       ├── meetingSlice.js
+│   │   │       ├── taskSlice.js
+│   │   │       ├── workerSlice.js
+│   │   │       └── dashboardSlice.js
+│   │   ├── services/
+│   │   │   ├── api.js
+│   │   │   └── socket.js
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   ├── useSocket.js
+│   │   │   └── useNotifications.js
+│   │   ├── utils/
+│   │   │   ├── helpers.js
+│   │   │   ├── validators.js
+│   │   │   └── constants.js
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   └── .env
+├── server/
+│   ├── config/
+│   │   ├── database.js
+│   │   └── socket.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Meeting.js
+│   │   ├── Task.js
+│   │   ├── Attendance.js
+│   │   ├── Notification.js
+│   │   ├── Comment.js
+│   │   ├── Department.js
+│   │   └── ActivityLog.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── userController.js
+│   │   ├── meetingController.js
+│   │   ├── taskController.js
+│   │   ├── attendanceController.js
+│   │   ├── notificationController.js
+│   │   ├── reportController.js
+│   │   └── dashboardController.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── userRoutes.js
+│   │   ├── meetingRoutes.js
+│   │   ├── taskRoutes.js
+│   │   ├── attendanceRoutes.js
+│   │   ├── notificationRoutes.js
+│   │   ├── reportRoutes.js
+│   │   └── dashboardRoutes.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   ├── role.js
+│   │   ├── upload.js
+│   │   └── errorHandler.js
+│   ├── utils/
+│   │   ├── emailService.js
+│   │   ├── jwt.js
+│   │   ├── validators.js
+│   │   └── reportGenerator.js
+│   ├── uploads/
+│   │   ├── profiles/
+│   │   ├── meetings/
+│   │   └── tasks/
+│   ├── scripts/
+│   │   ├── createAdmin.js
+│   │   ├── initDb.js
+│   │   └── seedData.js
+│   ├── app.js
+│   ├── server.js
+│   ├── package.json
+│   └── .env
+├── docs/
+│   ├── API.md
+│   ├── DEPLOYMENT.md
+│   └── USER_GUIDE.md
+└── README.md

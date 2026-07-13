@@ -1,0 +1,44 @@
+hammedia-progress-monitor project
+day 1: connect MongoDB, and install frontend backend install dependencies- done 
+day 2: Dashboard page
+Day 3: Workers page
+day 4: meetings page
+day 5: tasks page
+day 6: reports page
+day 7: settings page
+
+
+Recommended Changes to Your Timeline
+Option A: Keep 7 Days but Adjust Priorities
+Day 1 (Done): Setup & Authentication
+✅ Already completed
+
+Day 2: Dashboard & Workers
+Complete Dashboard (stats + charts)
+Basic Workers CRUD
+Focus on getting data from MongoDB
+
+Day 3: Meetings & Tasks
+Meeting management
+Task assignment
+Progress tracking
+
+Day 4: Worker Dashboard & Reports
+Worker side features
+Basic reports
+Real-time updates
+
+Day 5: Settings & Polish
+Settings page
+Profile management
+Bug fixes
+
+Day 6: Advanced Features
+File uploads
+Notifications
+Additional polish
+
+Day 7: Final Testing & Deployment
+Full testing
+Bug fixes
+Production deployment

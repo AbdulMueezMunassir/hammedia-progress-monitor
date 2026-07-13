@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   FaHome, 
@@ -16,20 +16,20 @@ import {
   FaMoon,
   FaSun
 } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/slices/authSlice';
 import toast from 'react-hot-toast';
-import GlassCard from '../components/common/GlassCard';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
-  const [notifications] = useState([
-    { id: 1, message: 'New worker registered', time: '5 min ago' },
-    { id: 2, message: 'Meeting scheduled for tomorrow', time: '1 hour ago' },
-  ]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  console.log('AdminLayout rendering...', location.pathname); // Debug log
 
   const menuItems = [
     { icon: FaHome, label: 'Dashboard', path: '/admin' },
@@ -55,67 +55,73 @@ const AdminLayout = () => {
     document.documentElement.classList.toggle('dark');
   };
 
+  const getPageTitle = () => {
+    const currentPath = location.pathname;
+    const item = menuItems.find(item => item.path === currentPath);
+    return item ? item.label : 'Dashboard';
+  };
+
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen gradient-bg flex">
       {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: sidebarOpen ? 0 : -280 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 h-screen w-64 glass border-r border-white/10 z-50"
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-white/10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xl">H</span>
-              </div>
-              <div>
-                <h1 className="text-white font-bold text-lg">Hammedia</h1>
-                <p className="text-white/40 text-xs">Admin Panel</p>
-              </div>
+      <div className={`fixed top-0 left-0 h-screen w-64 glass border-r border-white/10 z-50 flex flex-col transition-all duration-300 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Logo */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xl">H</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-white font-bold text-lg truncate">Hammedia</h1>
+              <p className="text-white/40 text-xs truncate">Admin Panel</p>
             </div>
           </div>
-
-          {/* Menu */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item, index) => (
-              <motion.button
-                key={index}
-                whileHover={{ scale: 1.02, x: 5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(item.path)}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
-              >
-                <item.icon className="text-lg" />
-                <span className="font-medium">{item.label}</span>
-              </motion.button>
-            ))}
-          </nav>
-
-          {/* Bottom */}
-          <div className="p-4 border-t border-white/10 space-y-2">
-            <button
-              onClick={toggleDarkMode}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
-            >
-              {darkMode ? <FaSun /> : <FaMoon />}
-              <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
-            >
-              <FaSignOutAlt />
-              <span>Logout</span>
-            </button>
-          </div>
         </div>
-      </motion.aside>
+
+        {/* Menu */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {menuItems.map((item, index) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={index}
+                onClick={() => navigate(item.path)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-white/10' 
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <item.icon className="text-lg flex-shrink-0" />
+                <span className="font-medium truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <button
+            onClick={toggleDarkMode}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
+          >
+            {darkMode ? <FaSun className="flex-shrink-0" /> : <FaMoon className="flex-shrink-0" />}
+            <span className="truncate">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
+          >
+            <FaSignOutAlt className="flex-shrink-0" />
+            <span className="truncate">Logout</span>
+          </button>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         {/* Navbar */}
         <header className="glass border-b border-white/10 p-4 sticky top-0 z-40">
           <div className="flex items-center justify-between">
@@ -126,36 +132,32 @@ const AdminLayout = () => {
               >
                 {sidebarOpen ? <FaTimes /> : <FaBars />}
               </button>
-              <h2 className="text-white font-semibold">Dashboard</h2>
+              <div>
+                <h2 className="text-white font-semibold">{getPageTitle()}</h2>
+                <p className="text-white/40 text-xs hidden md:block">
+                  Welcome back, {user?.name || 'Admin'}
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {/* Notifications */}
-              <div className="relative">
-                <button className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 relative">
-                  <FaBell className="text-xl" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                </button>
-                {/* Notification dropdown */}
-                <div className="absolute right-0 mt-2 w-80 glass rounded-xl border border-white/10 shadow-xl overflow-hidden opacity-0 invisible hover:opacity-100 hover:visible transition-all duration-300">
-                  <div className="p-4 border-b border-white/10">
-                    <h3 className="text-white font-semibold">Notifications</h3>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {notifications.map((notif) => (
-                      <div key={notif.id} className="p-4 hover:bg-white/5 transition-colors border-b border-white/5">
-                        <p className="text-white text-sm">{notif.message}</p>
-                        <p className="text-white/40 text-xs mt-1">{notif.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 relative"
+              >
+                <FaBell className="text-xl" />
+              </button>
 
-              {/* Profile */}
-              <button className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
-                <FaUserCircle className="text-2xl" />
-                <span className="hidden md:inline">Admin</span>
+              {/* User Profile */}
+              <button 
+                onClick={() => navigate('/admin/settings')}
+                className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                  {user?.name?.charAt(0) || 'A'}
+                </div>
+                <span className="hidden md:inline text-sm">{user?.name || 'Admin'}</span>
               </button>
             </div>
           </div>
@@ -163,13 +165,11 @@ const AdminLayout = () => {
 
         {/* Page Content */}
         <main className="p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="text-white">
+            {/* Debug output */}
+            <div className="text-xs text-white/40 mb-4">Current path: {location.pathname}</div>
             <Outlet />
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>

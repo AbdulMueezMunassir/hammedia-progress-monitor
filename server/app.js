@@ -49,7 +49,44 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Hammedia API is running with MongoDB' });
+  res.json({ 
+    status: 'OK', 
+    message: 'Hammedia API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Debug route to see all registered routes
+app.get('/api/routes', (req, res) => {
+  const routes = [];
+  
+  // Get all registered routes
+  app._router.stack.forEach((layer) => {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
+      routes.push({
+        path: layer.route.path,
+        methods: methods
+      });
+    } else if (layer.name === 'router') {
+      // Get routes from routers
+      layer.handle.stack.forEach((subLayer) => {
+        if (subLayer.route) {
+          const methods = Object.keys(subLayer.route.methods).join(', ').toUpperCase();
+          routes.push({
+            path: subLayer.route.path,
+            methods: methods
+          });
+        }
+      });
+    }
+  });
+  
+  res.json({
+    success: true,
+    routes: routes,
+    total: routes.length
+  });
 });
 
 // Error handling

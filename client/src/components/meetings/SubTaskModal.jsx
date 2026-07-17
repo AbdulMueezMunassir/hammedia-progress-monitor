@@ -1,47 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaPlus } from 'react-icons/fa';
 import GlassCard from '../common/GlassCard';
 
-const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
+const SubTaskModal = ({ isOpen, onClose, onAdd, task }) => {
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
     owner: '',
-    status: 'pending',
     dueDate: '',
-    priority: 'medium'
+    status: 'not-started'
   });
 
-  useEffect(() => {
-    if (editTask) {
-      setFormData({
-        title: editTask.title || '',
-        description: editTask.description || '',
-        owner: editTask.owner || '',
-        status: editTask.status || 'pending',
-        dueDate: editTask.dueDate || '',
-        priority: editTask.priority || 'medium'
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        owner: '',
-        status: 'pending',
-        dueDate: '',
-        priority: 'medium'
-      });
-    }
-  }, [editTask, isOpen]);
+  if (!isOpen || !task) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onAdd(formData);
+    onAdd(task.id, formData);
     onClose();
+    setFormData({ title: '', owner: '', dueDate: '', status: 'not-started' });
   };
-
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -51,12 +28,12 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="relative w-full max-w-lg"
+          className="relative w-full max-w-md"
         >
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white text-lg font-semibold">
-                {editTask ? 'Edit Task' : `New Task - ${meetingType} Meeting`}
+                Add Subtask to "{task.title}"
               </h3>
               <button
                 onClick={onClose}
@@ -68,25 +45,14 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-white/60 text-sm block mb-1">Task Title *</label>
+                <label className="text-white/60 text-sm block mb-1">Subtask Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Enter task title"
+                  placeholder="Enter subtask title"
                   required
-                />
-              </div>
-
-              <div>
-                <label className="text-white/60 text-sm block mb-1">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  rows="3"
-                  placeholder="Enter description"
                 />
               </div>
 
@@ -98,7 +64,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
                     value={formData.owner}
                     onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Enter owner name"
+                    placeholder="Owner name"
                     required
                   />
                 </div>
@@ -114,20 +80,20 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                Status
-                <div>
-                  <label className="text-white/60 text-sm block mb-1">Priority</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-white/60 text-sm block mb-1">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="not-started">Not Started</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="stuck">Stuck</option>
+                  <option value="hold">Hold</option>
+                  <option value="dropped">Dropped</option>
+                </select>
               </div>
 
               <button
@@ -135,7 +101,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
                 className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2"
               >
                 <FaPlus />
-                {editTask ? 'Update Task' : 'Add Task'}
+                Add Subtask
               </button>
             </form>
           </GlassCard>
@@ -145,4 +111,4 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, meetingType, editTask }) => {
   );
 };
 
-export default AddTaskModal;
+export default SubTaskModal;

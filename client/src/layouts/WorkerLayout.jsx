@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   FaHome, 
   FaTasks, 
@@ -10,7 +9,6 @@ import {
   FaBars,
   FaTimes,
   FaBell,
-  FaUserCircle,
   FaMoon,
   FaSun
 } from 'react-icons/fa';
@@ -24,7 +22,29 @@ const WorkerLayout = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
+
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.remove('light-mode');
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.body.classList.add('light-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   const menuItems = [
     { icon: FaHome, label: 'Dashboard', path: '/worker' },
@@ -43,14 +63,8 @@ const WorkerLayout = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
-
   return (
     <div className="min-h-screen gradient-bg flex">
-      {/* Sidebar */}
       <div className={`fixed top-0 left-0 h-screen w-64 glass border-r border-white/10 z-50 flex flex-col transition-all duration-300 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
@@ -91,8 +105,8 @@ const WorkerLayout = () => {
             onClick={toggleDarkMode}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
           >
-            {darkMode ? <FaSun /> : <FaMoon />}
-            <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+            {isDarkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-blue-400" />}
+            <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           <button
             onClick={handleLogout}
@@ -104,7 +118,6 @@ const WorkerLayout = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <header className="glass border-b border-white/10 p-4 sticky top-0 z-40">
           <div className="flex items-center justify-between">
@@ -117,26 +130,27 @@ const WorkerLayout = () => {
               </button>
               <h2 className="text-white font-semibold">Worker Dashboard</h2>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <button className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
                 <FaBell className="text-xl" />
               </button>
-              <button className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
-                <FaUserCircle className="text-2xl" />
-                <span className="hidden md:inline">{user?.name || 'Worker'}</span>
+              <button
+                onClick={toggleDarkMode}
+                className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              >
+                {isDarkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
               </button>
+              <div className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                  {user?.name?.charAt(0) || 'W'}
+                </div>
+                <span className="hidden md:inline text-sm">{user?.name || 'Worker'}</span>
+              </div>
             </div>
           </div>
         </header>
-
         <main className="p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Outlet />
-          </motion.div>
+          <Outlet />
         </main>
       </div>
     </div>

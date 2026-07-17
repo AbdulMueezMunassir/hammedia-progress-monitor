@@ -8,28 +8,44 @@ import {
   FaPlus, 
   FaChevronDown,
   FaChevronRight,
-  FaUser,
-  FaCalendarAlt,
-  FaFlag,
-  FaClock,
   FaEdit,
   FaTrash,
   FaArrowUp,
   FaArrowDown,
-  FaExclamationTriangle,
   FaCheckCircle,
   FaPause,
   FaPlay,
   FaStop,
-  FaEllipsisV,
-  FaTimes
+  FaTimes,
+  FaListUl,
+  FaPlusCircle,
+  FaMinusCircle,
+  FaInfoCircle
 } from 'react-icons/fa';
 import GlassCard from '../common/GlassCard';
 import AddTaskModal from './AddTaskModal';
 import EscalateModal from './EscalateModal';
+import SubTaskModal from './SubTaskModal';
 import toast from 'react-hot-toast';
 
-const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
+// Status configuration with proper colors
+const STATUS_CONFIG = {
+  'not-started': { label: 'Not Started', color: '#6B7280', bgColor: '#1F2937', textColor: '#9CA3AF' },
+  'in-progress': { label: 'In Progress', color: '#3B82F6', bgColor: '#1E3A5F', textColor: '#60A5FA' },
+  'completed': { label: 'Completed', color: '#10B981', bgColor: '#1A3A2A', textColor: '#34D399' },
+  'stuck': { label: 'Stuck', color: '#EF4444', bgColor: '#3A1A1A', textColor: '#F87171' },
+  'hold': { label: 'Hold', color: '#F59E0B', bgColor: '#3A2A1A', textColor: '#FBBF24' },
+  'dropped': { label: 'Dropped', color: '#6B7280', bgColor: '#1F2937', textColor: '#9CA3AF' }
+};
+
+// Priority colors
+const PRIORITY_CONFIG = {
+  'high': { label: 'High', color: '#EF4444', bgColor: '#3A1A1A' },
+  'medium': { label: 'Medium', color: '#F59E0B', bgColor: '#3A2A1A' },
+  'low': { label: 'Low', color: '#10B981', bgColor: '#1A3A2A' }
+};
+
+const MeetingBoard = ({ meetingType = 'F3' }) => {
   const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -38,13 +54,19 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [showSubTaskModal, setShowSubTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
+    'not-started': true,
     'in-progress': true,
-    'completed': true
+    'completed': true,
+    'stuck': true,
+    'hold': true,
+    'dropped': true
   });
+  const [expandedTasks, setExpandedTasks] = useState({});
 
-  // Sample data for demonstration
+  // Sample data
   useEffect(() => {
     const sampleTasks = [
       {
@@ -56,8 +78,13 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         priority: 'low',
         lastUpdated: '3 days ago',
         description: 'Launch Envoy website with new design',
-        escalatedTo: null,
-        comments: ['Waiting for content', 'Design approved']
+        escalatedTo: 'EXCO',
+        subtasks: [
+          { id: 101, title: 'Design homepage', status: 'completed', owner: 'Sara', dueDate: '2024-07-20' },
+          { id: 102, title: 'Develop backend API', status: 'in-progress', owner: 'Fathima', dueDate: '2024-07-23' },
+          { id: 103, title: 'Content writing', status: 'not-started', owner: 'Mohamed', dueDate: '2024-07-25' },
+          { id: 104, title: 'Testing', status: 'not-started', owner: 'Ali', dueDate: '2024-07-26' }
+        ]
       },
       {
         id: 2,
@@ -69,7 +96,11 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         lastUpdated: '3 days ago',
         description: 'Launch MTM product line',
         escalatedTo: null,
-        comments: ['Need final approval']
+        subtasks: [
+          { id: 201, title: 'Product testing', status: 'completed', owner: 'Ali', dueDate: '2024-07-22' },
+          { id: 202, title: 'Marketing materials', status: 'in-progress', owner: 'Sara', dueDate: '2024-07-26' },
+          { id: 203, title: 'Training session', status: 'not-started', owner: 'Ahmed', dueDate: '2024-07-28' }
+        ]
       },
       {
         id: 3,
@@ -81,7 +112,11 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         lastUpdated: '3 days ago',
         description: 'Upgrade internet leasing infrastructure',
         escalatedTo: null,
-        comments: ['Vendor coordination pending']
+        subtasks: [
+          { id: 301, title: 'Vendor selection', status: 'completed', owner: 'Mohamed', dueDate: '2024-07-15' },
+          { id: 302, title: 'Contract negotiation', status: 'in-progress', owner: 'Ahmed', dueDate: '2024-07-25' },
+          { id: 303, title: 'Infrastructure setup', status: 'not-started', owner: 'Fathima', dueDate: '2024-07-30' }
+        ]
       },
       {
         id: 4,
@@ -93,7 +128,11 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         lastUpdated: '2 days ago',
         description: 'Finalize dashboard UI design',
         escalatedTo: null,
-        comments: ['Done - waiting for review']
+        subtasks: [
+          { id: 401, title: 'Design mockups', status: 'completed', owner: 'Sara', dueDate: '2024-07-10' },
+          { id: 402, title: 'Frontend implementation', status: 'completed', owner: 'Ali', dueDate: '2024-07-18' },
+          { id: 403, title: 'Testing', status: 'completed', owner: 'Fathima', dueDate: '2024-07-20' }
+        ]
       },
       {
         id: 5,
@@ -105,13 +144,16 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         lastUpdated: '5 days ago',
         description: 'Write API documentation',
         escalatedTo: null,
-        comments: ['Complete']
+        subtasks: [
+          { id: 501, title: 'API endpoints doc', status: 'completed', owner: 'Ali', dueDate: '2024-07-15' },
+          { id: 502, title: 'Authentication guide', status: 'completed', owner: 'Mohamed', dueDate: '2024-07-17' }
+        ]
       }
     ];
     setTasks(sampleTasks);
   }, []);
 
-  // Toggle section expansion
+  // Toggle section
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -119,46 +161,100 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
     }));
   };
 
-  // Handle task escalation
+  // Toggle task subtasks
+  const toggleTask = (taskId) => {
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
+  // Handle escalate
   const handleEscalate = (taskId, escalateTo) => {
     setTasks(prev => prev.map(task => 
       task.id === taskId 
         ? { ...task, escalatedTo: escalateTo }
         : task
     ));
-    toast.success(`Task escalated to ${escalateTo}`);
+    toast.success(`✅ Task escalated to ${escalateTo}`);
+    setShowEscalateModal(false);
+    setSelectedTask(null);
   };
 
-  // Handle task status change
+  // Handle status change
   const handleStatusChange = (taskId, newStatus) => {
     setTasks(prev => prev.map(task => 
       task.id === taskId 
         ? { ...task, status: newStatus }
         : task
     ));
-    toast.success(`Task status updated to ${newStatus}`);
+    toast.success(`Status updated to ${STATUS_CONFIG[newStatus]?.label || newStatus}`);
   };
 
-  // Handle task deletion
+  // Handle subtask status change
+  const handleSubtaskStatusChange = (taskId, subtaskId, newStatus) => {
+    setTasks(prev => prev.map(task => {
+      if (task.id === taskId) {
+        const updatedSubtasks = task.subtasks.map(subtask =>
+          subtask.id === subtaskId 
+            ? { ...subtask, status: newStatus }
+            : subtask
+        );
+        return { ...task, subtasks: updatedSubtasks };
+      }
+      return task;
+    }));
+    toast.success('Subtask status updated');
+  };
+
+  // Handle add subtask
+  const handleAddSubtask = (taskId, subtaskData) => {
+    setTasks(prev => prev.map(task => {
+      if (task.id === taskId) {
+        const newSubtask = {
+          id: Date.now(),
+          ...subtaskData,
+          status: 'not-started'
+        };
+        return { ...task, subtasks: [...task.subtasks, newSubtask] };
+      }
+      return task;
+    }));
+    toast.success('Subtask added!');
+    setShowSubTaskModal(false);
+    setSelectedTask(null);
+  };
+
+  // Handle delete task
   const handleDeleteTask = (taskId) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId));
-    toast.success('Task deleted');
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      toast.success('Task deleted');
+    }
   };
 
-  // Handle new task
+  // Handle add task
   const handleAddTask = (newTask) => {
     const task = {
       id: Date.now(),
       ...newTask,
       lastUpdated: 'Just now',
-      comments: [],
-      escalatedTo: null
+      escalatedTo: null,
+      subtasks: []
     };
     setTasks(prev => [...prev, task]);
-    toast.success('Task added successfully!');
+    toast.success('Task added!');
+    setShowAddModal(false);
   };
 
-  // Filter tasks
+  // Calculate progress
+  const calculateProgress = (task) => {
+    if (!task.subtasks || task.subtasks.length === 0) return 0;
+    const completed = task.subtasks.filter(s => s.status === 'completed').length;
+    return Math.round((completed / task.subtasks.length) * 100);
+  };
+
+  // Filter and sort
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           task.owner.toLowerCase().includes(searchTerm.toLowerCase());
@@ -167,7 +263,7 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  // Sort tasks
+  // Sort
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     let compareA, compareB;
     switch(sortBy) {
@@ -195,32 +291,19 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
     return sortOrder === 'asc' ? (compareA > compareB ? 1 : -1) : (compareA < compareB ? 1 : -1);
   });
 
-  // Group tasks by status
-  const groupedTasks = {
-    'in-progress': sortedTasks.filter(t => t.status === 'in-progress'),
-    'completed': sortedTasks.filter(t => t.status === 'completed'),
-    'pending': sortedTasks.filter(t => t.status === 'pending'),
-    'stuck': sortedTasks.filter(t => t.status === 'stuck'),
-    'hold': sortedTasks.filter(t => t.status === 'hold')
-  };
-
-  // Status labels and colors
-  const statusConfig = {
-    'in-progress': { label: 'Work In Progress', color: 'bg-yellow-500', icon: FaPlay },
-    'completed': { label: 'Completed', color: 'bg-green-500', icon: FaCheckCircle },
-    'pending': { label: 'Pending', color: 'bg-blue-500', icon: FaClock },
-    'stuck': { label: 'Stuck', color: 'bg-red-500', icon: FaStop },
-    'hold': { label: 'Hold', color: 'bg-orange-500', icon: FaPause }
-  };
-
-  const priorityColors = {
-    'high': 'text-red-400 bg-red-500/10',
-    'medium': 'text-yellow-400 bg-yellow-500/10',
-    'low': 'text-green-400 bg-green-500/10'
-  };
+  // Group by status
+  const groupedTasks = {};
+  Object.keys(STATUS_CONFIG).forEach(status => {
+    groupedTasks[status] = sortedTasks.filter(t => t.status === status);
+  });
 
   const getEscalateTarget = (type) => {
     return type === 'F3' ? 'EXCO' : 'F3';
+  };
+
+  // Check if task can be escalated
+  const canEscalate = (task) => {
+    return !task.escalatedTo || task.escalatedTo === 'none' || task.escalatedTo === null;
   };
 
   return (
@@ -231,15 +314,13 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
           <h2 className="text-2xl font-bold text-white">{meetingType} Meeting</h2>
           <p className="text-white/40 text-sm">Manage tasks and action items</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 text-sm"
-          >
-            <FaPlus />
-            New Task
-          </button>
-        </div>
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 text-sm"
+        >
+          <FaPlus />
+          New Task
+        </button>
       </div>
 
       {/* Toolbar */}
@@ -253,32 +334,36 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Filter */}
+          {/* Status Filter */}
           <select 
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Status</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="stuck">Stuck</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Status</option>
+            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+              <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                {val.label}
+              </option>
+            ))}
           </select>
 
+          {/* Priority Filter */}
           <select 
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Priority</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Priority</option>
+            <option value="high" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>High</option>
+            <option value="medium" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Medium</option>
+            <option value="low" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Low</option>
           </select>
 
           {/* Sort */}
@@ -286,30 +371,21 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+              style={{ color: '#ffffff' }}
             >
-              <option value="dueDate">Due Date</option>
-              <option value="priority">Priority</option>
-              <option value="title">Title</option>
-              <option value="owner">Owner</option>
+              <option value="dueDate" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Due Date</option>
+              <option value="priority" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Priority</option>
+              <option value="title" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Title</option>
+              <option value="owner" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Owner</option>
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+              className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white/70 hover:text-white transition-colors border border-gray-700"
             >
-              {sortOrder === 'asc' ? <FaArrowUp /> : <FaArrowDown />}
+              {sortOrder === 'asc' ? <FaArrowUp className="text-sm" /> : <FaArrowDown className="text-sm" />}
             </button>
           </div>
-
-          {/* View options */}
-          <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-1 text-sm">
-            <FaEye />
-            Hide
-          </button>
-          <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-1 text-sm">
-            <FaFilter />
-            Group by
-          </button>
         </div>
       </GlassCard>
 
@@ -317,7 +393,7 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
       <div className="space-y-4">
         {Object.entries(groupedTasks).map(([statusKey, statusTasks]) => {
           if (statusTasks.length === 0) return null;
-          const config = statusConfig[statusKey];
+          const config = STATUS_CONFIG[statusKey];
           const isExpanded = expandedSections[statusKey];
 
           return (
@@ -328,7 +404,7 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
                 onClick={() => toggleSection(statusKey)}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${config.color}`} />
+                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: config.color }} />
                   <h3 className="text-white font-semibold">{config.label}</h3>
                   <span className="text-white/40 text-sm">({statusTasks.length})</span>
                 </div>
@@ -348,108 +424,209 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
                   >
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Task</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Owner</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Status</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Due date</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Priority</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Last updated</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Text</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Escalate to ...</th>
-                          <th className="text-left py-2 px-3 text-white/40 font-medium">Actions</th>
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Task</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Owner</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Status</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Due date</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Priority</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Last updated</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Progress</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Escalate to ...</th>
+                          <th className="text-left py-2 px-3 text-gray-400 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {statusTasks.map((task) => (
-                          <motion.tr
-                            key={task.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                          >
-                            <td className="py-2 px-3">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-medium">{task.title}</span>
-                                {task.escalatedTo && (
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-400">
-                                    → {task.escalatedTo}
+                        {statusTasks.map((task) => {
+                          const progress = calculateProgress(task);
+                          const isTaskExpanded = expandedTasks[task.id] || false;
+                          const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+                          
+                          return (
+                            <React.Fragment key={task.id}>
+                              <tr className="border-b border-gray-700/50 hover:bg-white/5 transition-colors">
+                                <td className="py-2 px-3">
+                                  <div className="flex items-center gap-2">
+                                    {hasSubtasks && (
+                                      <button
+                                        onClick={() => toggleTask(task.id)}
+                                        className="text-gray-400 hover:text-white transition-colors"
+                                      >
+                                        {isTaskExpanded ? <FaMinusCircle className="text-xs" /> : <FaPlusCircle className="text-xs" />}
+                                      </button>
+                                    )}
+                                    <span className="text-white font-medium">{task.title}</span>
+                                    {task.escalatedTo && task.escalatedTo !== 'none' && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-400">
+                                        → {task.escalatedTo}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                                      {task.owner.charAt(0)}
+                                    </div>
+                                    <span className="text-gray-300">{task.owner}</span>
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3">
+                                  <select
+                                    value={task.status}
+                                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                                    className="bg-gray-800 text-white text-xs rounded px-2 py-1 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[110px]"
+                                    style={{ 
+                                      backgroundColor: '#1e293b',
+                                      color: '#ffffff'
+                                    }}
+                                  >
+                                    {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                                      <option 
+                                        key={key} 
+                                        value={key}
+                                        style={{ 
+                                          backgroundColor: '#1e293b', 
+                                          color: '#ffffff',
+                                          padding: '4px 8px'
+                                        }}
+                                      >
+                                        {val.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="py-2 px-3 text-gray-300">
+                                  {task.dueDate}
+                                </td>
+                                <td className="py-2 px-3">
+                                  <span 
+                                    className="px-2 py-0.5 rounded-full text-xs font-medium"
+                                    style={{ 
+                                      backgroundColor: PRIORITY_CONFIG[task.priority]?.bgColor || '#1F2937',
+                                      color: PRIORITY_CONFIG[task.priority]?.color || '#9CA3AF'
+                                    }}
+                                  >
+                                    {task.priority}
                                   </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-2 px-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                                  {task.owner.charAt(0)}
-                                </div>
-                                <span className="text-white/80">{task.owner}</span>
-                              </div>
-                            </td>
-                            <td className="py-2 px-3">
-                              <select
-                                value={task.status}
-                                onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                                className="bg-white/10 text-white text-xs rounded px-2 py-1 border border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              >
-                                {Object.entries(statusConfig).map(([key, val]) => (
-                                  <option key={key} value={key}>{val.label}</option>
-                                ))}
-                              </select>
-                            </td>
-                            <td className="py-2 px-3 text-white/80">
-                              {task.dueDate}
-                            </td>
-                            <td className="py-2 px-3">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityColors[task.priority]}`}>
-                                {task.priority}
-                              </span>
-                            </td>
-                            <td className="py-2 px-3 text-white/60 text-xs">
-                              {task.lastUpdated}
-                            </td>
-                            <td className="py-2 px-3 text-white/60 text-xs max-w-[100px] truncate">
-                              {task.description}
-                            </td>
-                            <td className="py-2 px-3">
-                              {!task.escalatedTo ? (
-                                <button
-                                  onClick={() => {
-                                    setSelectedTask(task);
-                                    setShowEscalateModal(true);
-                                  }}
-                                  className="px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors text-xs flex items-center gap-1"
-                                >
-                                  <FaArrowUp className="text-xs" />
-                                  Escalate
-                                </button>
-                              ) : (
-                                <span className="text-purple-400 text-xs font-medium">
-                                  Escalated to {task.escalatedTo}
-                                </span>
+                                </td>
+                                <td className="py-2 px-3 text-gray-400 text-xs">
+                                  {task.lastUpdated}
+                                </td>
+                                <td className="py-2 px-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-purple-500"
+                                        style={{ width: `${progress}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-gray-400 text-xs">{progress}%</span>
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3">
+                                  {canEscalate(task) ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedTask(task);
+                                        setShowEscalateModal(true);
+                                      }}
+                                      className="px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors text-xs flex items-center gap-1"
+                                    >
+                                      <FaArrowUp className="text-xs" />
+                                      Escalate
+                                    </button>
+                                  ) : (
+                                    <span className="text-purple-400 text-xs font-medium">
+                                      ✓ Escalated
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2 px-3">
+                                  <div className="flex items-center gap-1">
+                                    {hasSubtasks && (
+                                      <button 
+                                        onClick={() => {
+                                          setSelectedTask(task);
+                                          setShowSubTaskModal(true);
+                                        }}
+                                        className="p-1 rounded hover:bg-blue-500/20 text-gray-400 hover:text-blue-400 transition-colors"
+                                        title="Add Subtask"
+                                      >
+                                        <FaListUl className="text-xs" />
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => {
+                                        setSelectedTask(task);
+                                        setShowAddModal(true);
+                                      }}
+                                      className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                      title="Edit Task"
+                                    >
+                                      <FaEdit className="text-xs" />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteTask(task.id)}
+                                      className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                                      title="Delete Task"
+                                    >
+                                      <FaTrash className="text-xs" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                              
+                              {/* Subtasks Row */}
+                              {isTaskExpanded && hasSubtasks && (
+                                <tr>
+                                  <td colSpan="9" className="py-2 px-3 bg-gray-800/30">
+                                    <div className="ml-6 space-y-1">
+                                      <div className="flex items-center gap-2 text-gray-400 text-xs mb-2">
+                                        <FaListUl />
+                                        <span>Subtasks ({task.subtasks.filter(s => s.status === 'completed').length}/{task.subtasks.length})</span>
+                                      </div>
+                                      {task.subtasks.map((subtask) => (
+                                        <div key={subtask.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
+                                          <div 
+                                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                            style={{ backgroundColor: STATUS_CONFIG[subtask.status]?.color || '#6B7280' }}
+                                          />
+                                          <span className="text-gray-300 text-sm flex-1">{subtask.title}</span>
+                                          <span className="text-gray-400 text-xs">{subtask.owner}</span>
+                                          <span className="text-gray-400 text-xs">{subtask.dueDate}</span>
+                                          <select
+                                            value={subtask.status}
+                                            onChange={(e) => handleSubtaskStatusChange(task.id, subtask.id, e.target.value)}
+                                            className="bg-gray-800 text-white text-xs rounded px-2 py-0.5 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
+                                            style={{ 
+                                              backgroundColor: '#1e293b',
+                                              color: '#ffffff'
+                                            }}
+                                          >
+                                            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                                              <option 
+                                                key={key} 
+                                                value={key}
+                                                style={{ 
+                                                  backgroundColor: '#1e293b', 
+                                                  color: '#ffffff',
+                                                  padding: '2px 6px'
+                                                }}
+                                              >
+                                                {val.label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
                               )}
-                            </td>
-                            <td className="py-2 px-3">
-                              <div className="flex items-center gap-1">
-                                <button 
-                                  onClick={() => {
-                                    setSelectedTask(task);
-                                    setShowAddModal(true);
-                                  }}
-                                  className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                                >
-                                  <FaEdit className="text-xs" />
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
-                                >
-                                  <FaTrash className="text-xs" />
-                                </button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
+                            </React.Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </motion.div>
@@ -460,16 +637,18 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         })}
       </div>
 
-      {/* Add Task Modal */}
+      {/* Modals */}
       <AddTaskModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setSelectedTask(null);
+        }}
         onAdd={handleAddTask}
         meetingType={meetingType}
         editTask={selectedTask}
       />
 
-      {/* Escalate Modal */}
       <EscalateModal
         isOpen={showEscalateModal}
         onClose={() => {
@@ -479,6 +658,16 @@ const MeetingBoard = ({ meetingType = 'F3', meetingData }) => {
         onEscalate={handleEscalate}
         task={selectedTask}
         targetMeeting={getEscalateTarget(meetingType)}
+      />
+
+      <SubTaskModal
+        isOpen={showSubTaskModal}
+        onClose={() => {
+          setShowSubTaskModal(false);
+          setSelectedTask(null);
+        }}
+        onAdd={handleAddSubtask}
+        task={selectedTask}
       />
     </div>
   );

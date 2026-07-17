@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   FaHome, 
   FaUsers, 
@@ -12,7 +11,6 @@ import {
   FaBars,
   FaTimes,
   FaBell,
-  FaUserCircle,
   FaMoon,
   FaSun
 } from 'react-icons/fa';
@@ -26,10 +24,30 @@ const AdminLayout = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
 
-  console.log('AdminLayout rendering...', location.pathname); // Debug log
+  // Dark mode state - get from localStorage
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Apply theme class to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.remove('light-mode');
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.body.classList.add('light-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   const menuItems = [
     { icon: FaHome, label: 'Dashboard', path: '/admin' },
@@ -50,11 +68,6 @@ const AdminLayout = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
-
   const getPageTitle = () => {
     const currentPath = location.pathname;
     const item = menuItems.find(item => item.path === currentPath);
@@ -70,12 +83,12 @@ const AdminLayout = () => {
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
               <span className="text-white font-bold text-xl">H</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-white font-bold text-lg truncate">Hammedia</h1>
-              <p className="text-white/40 text-xs truncate">Admin Panel</p>
+            <div>
+              <h1 className="text-white font-bold text-lg">Hammedia</h1>
+              <p className="text-white/40 text-xs">Admin Panel</p>
             </div>
           </div>
         </div>
@@ -94,28 +107,28 @@ const AdminLayout = () => {
                     : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <item.icon className="text-lg flex-shrink-0" />
-                <span className="font-medium truncate">{item.label}</span>
+                <item.icon className="text-lg" />
+                <span className="font-medium">{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Bottom Section */}
+        {/* Bottom */}
         <div className="p-4 border-t border-white/10 space-y-2">
           <button
             onClick={toggleDarkMode}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300"
           >
-            {darkMode ? <FaSun className="flex-shrink-0" /> : <FaMoon className="flex-shrink-0" />}
-            <span className="truncate">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+            {isDarkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-blue-400" />}
+            <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
           >
-            <FaSignOutAlt className="flex-shrink-0" />
-            <span className="truncate">Logout</span>
+            <FaSignOutAlt />
+            <span>Logout</span>
           </button>
         </div>
       </div>
@@ -139,37 +152,29 @@ const AdminLayout = () => {
                 </p>
               </div>
             </div>
-
             <div className="flex items-center space-x-3">
-              {/* Notifications */}
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 relative"
-              >
+              <button className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 relative">
                 <FaBell className="text-xl" />
               </button>
-
-              {/* User Profile */}
-              <button 
-                onClick={() => navigate('/admin/settings')}
-                className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              <button
+                onClick={toggleDarkMode}
+                className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
               >
+                {isDarkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
+              </button>
+              <div className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
                 <span className="hidden md:inline text-sm">{user?.name || 'Admin'}</span>
-              </button>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
         <main className="p-6">
-          <div className="text-white">
-            {/* Debug output */}
-            <div className="text-xs text-white/40 mb-4">Current path: {location.pathname}</div>
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </div>

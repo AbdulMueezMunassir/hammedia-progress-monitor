@@ -16,6 +16,13 @@
     background: #0f172a;
     color: #f1f5f9;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light mode styles */
+  body.light-mode {
+    background: #f1f5f9;
+    color: #0f172a;
   }
 
   ::-webkit-scrollbar {
@@ -26,6 +33,10 @@
   ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
+  }
+
+  body.light-mode ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
   }
 
   ::-webkit-scrollbar-thumb {
@@ -44,6 +55,12 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  body.light-mode .glass {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   .glass-card {
@@ -56,11 +73,23 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  body.light-mode .glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+
   .glass-card:hover {
     transform: translateY(-4px);
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.15);
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+  }
+
+  body.light-mode .glass-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
   }
 
   .gradient-text {
@@ -72,6 +101,11 @@
 
   .gradient-bg {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%);
+    transition: background 0.3s ease;
+  }
+
+  body.light-mode .gradient-bg {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #dbeafe 100%);
   }
 
   .btn-primary {
@@ -81,10 +115,18 @@
            hover:shadow-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
   }
 
+  body.light-mode .btn-primary {
+    @apply shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25;
+  }
+
   .btn-secondary {
     @apply px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl 
            hover:bg-white/20 transform hover:scale-[1.02] 
            transition-all duration-300 border border-white/10;
+  }
+
+  body.light-mode .btn-secondary {
+    @apply bg-black/5 text-gray-700 border-black/10 hover:bg-black/10;
   }
 
   .input-field {
@@ -92,10 +134,211 @@
            text-white placeholder-white/50 focus:outline-none focus:ring-2 
            focus:ring-blue-500 focus:border-transparent transition-all duration-300;
   }
+
+  body.light-mode .input-field {
+    @apply bg-gray-100/80 border-gray-300 text-gray-800 placeholder-gray-400;
+  }
+
+  /* Light mode text colors */
+  body.light-mode .text-white {
+    color: #0f172a !important;
+  }
+
+  body.light-mode .text-white\/60 {
+    color: rgba(15, 23, 42, 0.6) !important;
+  }
+
+  body.light-mode .text-white\/40 {
+    color: rgba(15, 23, 42, 0.4) !important;
+  }
+
+  body.light-mode .text-white\/30 {
+    color: rgba(15, 23, 42, 0.3) !important;
+  }
+
+  body.light-mode .text-white\/20 {
+    color: rgba(15, 23, 42, 0.2) !important;
+  }
+
+  body.light-mode .text-white\/70 {
+    color: rgba(15, 23, 42, 0.7) !important;
+  }
+
+  body.light-mode .text-white\/80 {
+    color: rgba(15, 23, 42, 0.8) !important;
+  }
+
+  body.light-mode .text-gray-300 {
+    color: #4b5563 !important;
+  }
+
+  body.light-mode .text-gray-400 {
+    color: #6b7280 !important;
+  }
+
+  body.light-mode .text-gray-500 {
+    color: #9ca3af !important;
+  }
+
+  /* Background colors */
+  body.light-mode .bg-white\/5 {
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+
+  body.light-mode .bg-white\/10 {
+    background: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  body.light-mode .bg-white\/20 {
+    background: rgba(0, 0, 0, 0.12) !important;
+  }
+
+  body.light-mode .bg-gray-800 {
+    background: #f1f5f9 !important;
+  }
+
+  body.light-mode .bg-gray-800\/80 {
+    background: rgba(241, 245, 249, 0.8) !important;
+  }
+
+  body.light-mode .bg-gray-800\/30 {
+    background: rgba(241, 245, 249, 0.3) !important;
+  }
+
+  body.light-mode .bg-gray-800\/10 {
+    background: rgba(241, 245, 249, 0.1) !important;
+  }
+
+  body.light-mode .bg-gray-800\/50 {
+    background: rgba(241, 245, 249, 0.5) !important;
+  }
+
+  body.light-mode .bg-gray-700 {
+    background: #e5e7eb !important;
+  }
+
+  body.light-mode .bg-gray-700\/50 {
+    background: rgba(229, 231, 235, 0.5) !important;
+  }
+
+  body.light-mode .bg-gray-700\/30 {
+    background: rgba(229, 231, 235, 0.3) !important;
+  }
+
+  body.light-mode .bg-gray-800\/20 {
+    background: rgba(241, 245, 249, 0.2) !important;
+  }
+
+  body.light-mode .bg-gray-700\/20 {
+    background: rgba(229, 231, 235, 0.2) !important;
+  }
+
+  /* Border colors */
+  body.light-mode .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  body.light-mode .border-white\/5 {
+    border-color: rgba(0, 0, 0, 0.05) !important;
+  }
+
+  body.light-mode .border-gray-700 {
+    border-color: #d1d5db !important;
+  }
+
+  body.light-mode .border-gray-700\/50 {
+    border-color: rgba(209, 213, 219, 0.5) !important;
+  }
+
+  body.light-mode .border-gray-700\/30 {
+    border-color: rgba(209, 213, 219, 0.3) !important;
+  }
+
+  body.light-mode .border-gray-600 {
+    border-color: #d1d5db !important;
+  }
+
+  /* Select dropdowns */
+  body.light-mode select {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #d1d5db !important;
+  }
+
+  body.light-mode select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Input fields in light mode */
+  body.light-mode .bg-gray-800 {
+    background-color: #f1f5f9 !important;
+  }
+
+  body.light-mode .bg-gray-800\/80 {
+    background-color: rgba(241, 245, 249, 0.8) !important;
+  }
+
+  body.light-mode .bg-gray-800\/10 {
+    background-color: rgba(241, 245, 249, 0.1) !important;
+  }
+
+  /* Modal backgrounds */
+  body.light-mode .bg-gray-800 {
+    background-color: #ffffff !important;
+  }
+
+  body.light-mode .bg-gray-700\/50 {
+    background-color: rgba(229, 231, 235, 0.5) !important;
+  }
+
+  body.light-mode .bg-gray-700 {
+    background-color: #e5e7eb !important;
+  }
+
+  /* Status badge colors in light mode */
+  body.light-mode .bg-purple-500\/20 {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+  }
+
+  body.light-mode .bg-orange-500\/20 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+  }
+
+  body.light-mode .bg-blue-500\/5 {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+  }
+
+  /* Glass card in light mode */
+  body.light-mode .glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  body.light-mode .glass-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Scrollbar for light mode */
+  body.light-mode ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  body.light-mode ::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+  }
 }
 
+/* Animation classes */
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes float {
@@ -103,6 +346,12 @@
   50% { transform: translateY(-10px); }
 }
 
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Loading skeleton */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -114,7 +363,27 @@
   animation: shimmer 1.5s infinite;
 }
 
+body.light-mode .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.05) 75%
+  );
+}
+
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Toast notifications */
+body.light-mode .go3958317564 {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }

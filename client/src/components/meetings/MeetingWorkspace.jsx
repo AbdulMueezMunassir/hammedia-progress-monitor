@@ -5,6 +5,7 @@ import {
   FaFilter, 
   FaSort, 
   FaEye, 
+  FaListUl,
   FaEdit,
   FaTrash,
   FaCopy,
@@ -53,6 +54,12 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [expandedTasks, setExpandedTasks] = useState({});
   
+  // UI state
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [groupBy, setGroupBy] = useState('status');
+  const [sortBy, setSortBy] = useState('dueDate');
+  const [sortOrder, setSortOrder] = useState('asc');
+  
   // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSubtaskEditModal, setShowSubtaskEditModal] = useState(false);
@@ -83,23 +90,32 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     description: ''
   });
 
-  // Sample data
+  // Get current year dynamically
+  const currentYear = new Date().getFullYear();
+
+  // Sample data with dynamic dates
   useEffect(() => {
+    const getDynamicDate = (daysOffset) => {
+      const date = new Date();
+      date.setDate(date.getDate() + daysOffset);
+      return date.toISOString().split('T')[0];
+    };
+
     const sampleTasks = [
       {
         id: 1,
         title: 'Envoy website launch',
         owner: 'Ahmed Ali',
         status: 'stuck',
-        dueDate: '2024-07-09',
+        dueDate: getDynamicDate(-14),
         priority: 'low',
         lastUpdated: 'Just now',
         description: 'PENDING PAYMENT APPROVAL',
         escalatedTo: meetingType === 'F3' ? 'EXCO' : null,
         escalatedFrom: meetingType === 'EXCO' ? 'F3' : null,
         subtasks: [
-          { id: 101, title: 'Design approval', status: 'stuck', owner: 'Sara', dueDate: '2024-07-01' },
-          { id: 102, title: 'Content review', status: 'in-progress', owner: 'Mohamed', dueDate: '2024-07-05' }
+          { id: 101, title: 'Design approval', status: 'stuck', owner: 'Sara', dueDate: getDynamicDate(-22) },
+          { id: 102, title: 'Content review', status: 'in-progress', owner: 'Mohamed', dueDate: getDynamicDate(-18) }
         ]
       },
       {
@@ -107,15 +123,15 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         title: 'Envoy MTM/MTQ launch',
         owner: 'Fathima Noor',
         status: 'completed',
-        dueDate: '2024-07-10',
+        dueDate: getDynamicDate(-13),
         priority: 'high',
         lastUpdated: 'Just now',
         description: 'MTM/MTQ product launch completed',
         escalatedTo: null,
         escalatedFrom: null,
         subtasks: [
-          { id: 201, title: 'Product testing', status: 'completed', owner: 'Ali', dueDate: '2024-07-08' },
-          { id: 202, title: 'Marketing materials', status: 'completed', owner: 'Sara', dueDate: '2024-07-09' }
+          { id: 201, title: 'Product testing', status: 'completed', owner: 'Ali', dueDate: getDynamicDate(-15) },
+          { id: 202, title: 'Marketing materials', status: 'completed', owner: 'Sara', dueDate: getDynamicDate(-14) }
         ]
       },
       {
@@ -123,15 +139,15 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         title: 'Upgrading Internet leasing',
         owner: 'Mohamed Rashid',
         status: 'stuck',
-        dueDate: '2024-07-11',
+        dueDate: getDynamicDate(-12),
         priority: 'medium',
         lastUpdated: '1 week ago',
         description: 'Vendor contract pending',
         escalatedTo: null,
         escalatedFrom: null,
         subtasks: [
-          { id: 301, title: 'Vendor selection', status: 'completed', owner: 'Mohamed', dueDate: '2024-07-05' },
-          { id: 302, title: 'Contract negotiation', status: 'stuck', owner: 'Ahmed', dueDate: '2024-07-11' }
+          { id: 301, title: 'Vendor selection', status: 'completed', owner: 'Mohamed', dueDate: getDynamicDate(-18) },
+          { id: 302, title: 'Contract negotiation', status: 'stuck', owner: 'Ahmed', dueDate: getDynamicDate(-12) }
         ]
       }
     ];
@@ -165,7 +181,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
 
   // ============= MODAL HANDLERS =============
   
-  // Open edit modal for main task
   const openEditModal = (task) => {
     setEditingTask(task);
     setEditFormData({
@@ -179,7 +194,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     setShowEditModal(true);
   };
 
-  // Save edited task from modal
   const saveEditedTask = () => {
     if (editFormData.title && editFormData.title.trim()) {
       setTasks(prev => prev.map(task => 
@@ -204,7 +218,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     }
   };
 
-  // Open edit modal for subtask
   const openSubtaskEditModal = (taskId, subtask) => {
     setEditingParentTaskId(taskId);
     setEditingSubtask(subtask);
@@ -219,7 +232,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     setShowSubtaskEditModal(true);
   };
 
-  // Save edited subtask from modal
   const saveEditedSubtask = () => {
     if (editFormData.title && editFormData.title.trim()) {
       setTasks(prev => prev.map(task => {
@@ -250,7 +262,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
 
   // ============= SUBTASK HANDLERS =============
   
-  // Add subtask
   const handleAddSubtask = (taskId) => {
     const title = newSubtaskInput[taskId] || 'New subitem';
     if (title && title.trim()) {
@@ -272,7 +283,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     }
   };
 
-  // Delete subtask
   const handleDeleteSubtask = (taskId, subtaskId) => {
     if (window.confirm('Delete this subtask?')) {
       setTasks(prev => prev.map(task => {
@@ -289,7 +299,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     }
   };
 
-  // Duplicate subtask
   const handleDuplicateSubtask = (taskId, subtaskId) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
@@ -347,19 +356,44 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     }
   };
 
+  // Escalation Functions
   const handleEscalate = (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (task.escalatedTo) {
+      toast.warning('Task is already escalated');
+      return;
+    }
+
     const targetMeeting = meetingType === 'F3' ? 'EXCO' : 'F3';
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
+    
+    setTasks(prev => prev.map(t => 
+      t.id === taskId 
         ? { 
-            ...task, 
+            ...t, 
             escalatedTo: targetMeeting, 
             escalatedFrom: meetingType,
             lastUpdated: 'Just now' 
           }
-        : task
+        : t
     ));
+    
     toast.success(`Task escalated to ${targetMeeting}`);
+  };
+
+  const handleDeEscalate = (taskId) => {
+    setTasks(prev => prev.map(t => 
+      t.id === taskId 
+        ? { 
+            ...t, 
+            escalatedTo: null, 
+            escalatedFrom: null,
+            lastUpdated: 'Just now' 
+          }
+        : t
+    ));
+    toast.success('Escalation removed');
   };
 
   const handleAddNewTask = () => {
@@ -420,14 +454,71 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
       return matchesSearch && matchesStatus && matchesPriority;
     });
 
+    // Filter out completed tasks if showCompleted is false
+    if (!showCompleted) {
+      filtered = filtered.filter(task => task.status !== 'completed');
+    }
+
     if (showEscalated) {
       filtered = filtered.filter(task => task.escalatedTo === meetingType);
     }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let compareA, compareB;
+      switch(sortBy) {
+        case 'dueDate':
+          compareA = new Date(a.dueDate);
+          compareB = new Date(b.dueDate);
+          break;
+        case 'priority':
+          const priorityOrder = { 'urgent': 0, 'high': 1, 'medium': 2, 'low': 3 };
+          compareA = priorityOrder[a.priority] || 3;
+          compareB = priorityOrder[b.priority] || 3;
+          break;
+        case 'title':
+          compareA = a.title.toLowerCase();
+          compareB = b.title.toLowerCase();
+          break;
+        case 'owner':
+          compareA = a.owner.toLowerCase();
+          compareB = b.owner.toLowerCase();
+          break;
+        default:
+          compareA = a.id;
+          compareB = b.id;
+      }
+      return sortOrder === 'asc' ? (compareA > compareB ? 1 : -1) : (compareA < compareB ? 1 : -1);
+    });
 
     return filtered;
   };
 
   const filteredTasks = getFilteredTasks();
+  
+  // Group tasks
+  const getGroupedTasks = () => {
+    if (groupBy === 'none') {
+      return { 'All Tasks': filteredTasks };
+    }
+
+    const groups = {};
+    filteredTasks.forEach(task => {
+      let key = task[groupBy] || 'Uncategorized';
+      if (groupBy === 'status') {
+        key = STATUS_CONFIG[key]?.label || key;
+      }
+      if (groupBy === 'priority') {
+        key = PRIORITY_CONFIG[key]?.label || key;
+      }
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(task);
+    });
+    return groups;
+  };
+
+  const groupedTasks = getGroupedTasks();
+  
   const inProgressTasks = filteredTasks.filter(t => t.status !== 'completed');
   const completedTasks = filteredTasks.filter(t => t.status === 'completed');
   const totalTasks = tasks.length;
@@ -436,6 +527,16 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
 
   // Render task rows
   const renderTaskRows = (taskList) => {
+    if (!taskList || taskList.length === 0) {
+      return (
+        <tr>
+          <td colSpan="10" className="text-center py-4 text-gray-500 text-sm">
+            No tasks in this group
+          </td>
+        </tr>
+      );
+    }
+
     return taskList.map((task) => {
       const isExpanded = expandedTasks[task.id] || false;
       const isSelected = selectedTasks.includes(task.id);
@@ -454,7 +555,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
             </td>
             <td className="py-3 px-3">
               <div className="flex items-center gap-2">
-                {/* Always show + button to add subtasks */}
                 <button
                   onClick={() => toggleTask(task.id)}
                   className="text-gray-500 hover:text-gray-300 transition-colors"
@@ -511,7 +611,18 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                   Escalate
                 </button>
               ) : (
-                <span className="text-purple-400 text-xs font-medium">✓ Escalated</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-purple-400 text-xs font-medium">
+                    ✓ → {task.escalatedTo}
+                  </span>
+                  <button 
+                    onClick={() => handleDeEscalate(task.id)}
+                    className="text-gray-500 hover:text-red-400 transition-colors text-xs"
+                    title="Remove escalation"
+                  >
+                    <FaTimes className="text-[10px]" />
+                  </button>
+                </div>
               )}
             </td>
             <td className="py-3 px-3">
@@ -546,7 +657,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
             <tr>
               <td colSpan="10" className="py-2 px-3 bg-gray-800/10">
                 <div className="pl-8 space-y-1">
-                  {/* Existing Subtasks */}
                   {hasSubtasks && task.subtasks.map((subtask) => (
                     <div key={subtask.id} className="flex items-center gap-2 py-1.5 hover:bg-white/5 rounded px-2 group">
                       <div 
@@ -603,7 +713,6 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                     </div>
                   ))}
                   
-                  {/* Add Subtask Input - Always visible when expanded */}
                   <div className="flex items-center gap-2 py-1.5 px-2">
                     <input
                       type="text"
@@ -631,6 +740,45 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         </React.Fragment>
       );
     });
+  };
+
+  // Render grouped tasks
+  const renderGroupedTasks = () => {
+    return Object.entries(groupedTasks).map(([groupName, taskList]) => (
+      <div key={groupName} className="mb-4">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/30 rounded-lg mb-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="text-white font-medium text-sm">{groupName}</span>
+          <span className="text-gray-400 text-xs">({taskList.length})</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-800/30">
+              <tr className="border-b border-gray-700/50">
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs w-6">
+                  <input
+                    type="checkbox"
+                    className="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 w-4 h-4"
+                  />
+                </th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Task</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Owner</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Status</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Due date</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Priority</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Last updated</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Text</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs">Escalate to...</th>
+                <th className="py-2 px-3 text-left text-gray-400 font-medium text-xs w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {renderTaskRows(taskList)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ));
   };
 
   return (
@@ -671,6 +819,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                 className="pl-8 pr-3 py-2 bg-gray-800/80 border border-gray-700 rounded text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 w-40"
               />
             </div>
+            
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -681,6 +830,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                 <option key={key} value={key}>{val.label}</option>
               ))}
             </select>
+            
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
@@ -691,11 +841,50 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                 <option key={key} value={key}>{val.label}</option>
               ))}
             </select>
-            <button className="p-2 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+            
+            {/* Sort Button */}
+            <button 
+              onClick={() => {
+                const sortOptions = ['dueDate', 'priority', 'title', 'owner'];
+                const currentIndex = sortOptions.indexOf(sortBy);
+                const nextIndex = (currentIndex + 1) % sortOptions.length;
+                setSortBy(sortOptions[nextIndex]);
+                toast.info(`Sorting by: ${sortOptions[nextIndex]}`);
+              }}
+              className="p-2 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+              title={`Sort by: ${sortBy}`}
+            >
               <FaSort className="text-sm" />
             </button>
-            <button className="p-2 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+            
+            {/* Eye Button - Toggle Completed Tasks */}
+            <button 
+              onClick={() => {
+                setShowCompleted(!showCompleted);
+                toast.info(showCompleted ? 'Hiding completed tasks' : 'Showing all tasks');
+              }}
+              className={`p-2 rounded hover:bg-white/5 transition-colors ${
+                showCompleted ? 'text-blue-400' : 'text-gray-500'
+              }`}
+              title={showCompleted ? 'Hide completed tasks' : 'Show completed tasks'}
+            >
               <FaEye className="text-sm" />
+            </button>
+            
+            {/* Group By Button */}
+            <button 
+              onClick={() => {
+                const groupOptions = ['status', 'priority', 'owner', 'none'];
+                const currentIndex = groupOptions.indexOf(groupBy);
+                const nextIndex = (currentIndex + 1) % groupOptions.length;
+                setGroupBy(groupOptions[nextIndex]);
+                toast.success(`Grouping by: ${groupOptions[nextIndex]}`);
+              }}
+              className="p-2 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+              title={`Group by: ${groupBy}`}
+            >
+              <FaListUl className="text-sm" />
+              <span className="text-xs hidden md:inline">{groupBy !== 'none' ? groupBy : ''}</span>
             </button>
           </div>
         </div>
@@ -725,88 +914,10 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         <span className="text-gray-400 text-xs">Click Edit button to modify tasks/subtasks</span>
       </div>
 
-      {/* In Progress Section */}
+      {/* Tasks Display - Grouped */}
       <div>
-        <h3 className="text-white font-medium text-base mb-3 flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-          Work In Progress ({inProgressTasks.length})
-        </h3>
-        <GlassCard className="overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-[#0f172a] z-10">
-                <tr className="border-b border-gray-700/50">
-                  <th className="py-3 px-3 w-6">
-                    <input
-                      type="checkbox"
-                      checked={selectedTasks.length === tasks.length && tasks.length > 0}
-                      onChange={selectAllTasks}
-                      className="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 w-4 h-4"
-                    />
-                  </th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Task</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Owner</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Status</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Due date</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Priority</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Last updated</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Text</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Escalate to...</th>
-                  <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm w-24">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {renderTaskRows(inProgressTasks)}
-                {inProgressTasks.length === 0 && (
-                  <tr>
-                    <td colSpan="10" className="text-center py-8 text-gray-500 text-sm">
-                      No tasks in progress
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+        {renderGroupedTasks()}
       </div>
-
-      {/* Completed Section */}
-      {completedTasks.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-white font-medium text-base mb-3 flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-            Completed ({completedTasks.length})
-          </h3>
-          <GlassCard className="overflow-hidden p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#0f172a] z-10">
-                  <tr className="border-b border-gray-700/50">
-                    <th className="py-3 px-3 w-6">
-                      <input
-                        type="checkbox"
-                        className="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 w-4 h-4"
-                      />
-                    </th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Task</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Owner</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Status</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Due date</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Priority</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Last updated</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Text</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm">Escalate to...</th>
-                    <th className="text-left py-3 px-3 text-gray-400 font-medium text-sm w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderTaskRows(completedTasks)}
-                </tbody>
-              </table>
-            </div>
-          </GlassCard>
-        </div>
-      )}
 
       {/* Add Task Button */}
       <button 

@@ -13,13 +13,14 @@ import {
   FaBuilding,
   FaIdCard,
   FaFilter,
-  FaChevronDown,
-  FaChevronRight,
   FaTimes,
   FaSave,
-  FaUserCircle,
   FaDownload,
-  FaUpload
+  FaUpload,
+  FaChevronDown,
+  FaChevronRight,
+  FaUsers,
+  FaUserCircle
 } from 'react-icons/fa';
 import GlassCard from '../../components/common/GlassCard';
 import toast from 'react-hot-toast';
@@ -32,6 +33,7 @@ const Workers = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
+  const [expandedWorker, setExpandedWorker] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,7 +46,7 @@ const Workers = () => {
     isActive: true
   });
 
-  // Sample departments
+  // Departments
   const departments = [
     'Management',
     'Design',
@@ -55,6 +57,18 @@ const Workers = () => {
     'Operations',
     'Sales'
   ];
+
+  // Department colors
+  const deptColors = {
+    'Management': '#3B82F6',
+    'Design': '#8B5CF6',
+    'Development': '#10B981',
+    'Marketing': '#F59E0B',
+    'HR': '#EF4444',
+    'Finance': '#EC4899',
+    'Operations': '#14B8A6',
+    'Sales': '#F97316'
+  };
 
   // Sample workers data
   useEffect(() => {
@@ -70,7 +84,8 @@ const Workers = () => {
         isActive: true,
         joinDate: '2024-01-15',
         tasksCompleted: 12,
-        tasksAssigned: 18
+        tasksAssigned: 18,
+        avatar: 'A'
       },
       {
         id: 2,
@@ -83,7 +98,8 @@ const Workers = () => {
         isActive: true,
         joinDate: '2024-02-01',
         tasksCompleted: 8,
-        tasksAssigned: 15
+        tasksAssigned: 15,
+        avatar: 'F'
       },
       {
         id: 3,
@@ -96,12 +112,13 @@ const Workers = () => {
         isActive: false,
         joinDate: '2023-11-01',
         tasksCompleted: 5,
-        tasksAssigned: 10
+        tasksAssigned: 10,
+        avatar: 'M'
       },
       {
         id: 4,
-        name: 'Sara Ahmed',
-        email: 'sara@hammedia.com',
+        name: 'Ishfaq',
+        email: 'ishfaq@hammedia.com',
         employeeId: 'EMP-004',
         department: 'HR',
         position: 'HR Manager',
@@ -109,7 +126,8 @@ const Workers = () => {
         isActive: true,
         joinDate: '2024-03-01',
         tasksCompleted: 3,
-        tasksAssigned: 6
+        tasksAssigned: 10,
+        avatar: 'S'
       },
       {
         id: 5,
@@ -122,7 +140,8 @@ const Workers = () => {
         isActive: true,
         joinDate: '2024-04-15',
         tasksCompleted: 15,
-        tasksAssigned: 20
+        tasksAssigned: 20,
+        avatar: 'A'
       }
     ];
     setWorkers(sampleWorkers);
@@ -131,27 +150,22 @@ const Workers = () => {
   // Handle add worker
   const handleAddWorker = (e) => {
     e.preventDefault();
+    if (!formData.name || !formData.email || !formData.password || !formData.employeeId) {
+      toast.error('Please fill all required fields');
+      return;
+    }
     const newWorker = {
       id: Date.now(),
       ...formData,
       joinDate: new Date().toISOString().split('T')[0],
       tasksCompleted: 0,
-      tasksAssigned: 0
+      tasksAssigned: 0,
+      avatar: formData.name.charAt(0).toUpperCase()
     };
     setWorkers(prev => [...prev, newWorker]);
     toast.success('Worker added successfully!');
     setShowAddModal(false);
-    setFormData({
-      name: '',
-      email: '',
-      password: '',
-      employeeId: '',
-      department: '',
-      position: '',
-      phone: '',
-      role: 'worker',
-      isActive: true
-    });
+    resetForm();
   };
 
   // Handle edit worker
@@ -165,6 +179,7 @@ const Workers = () => {
     toast.success('Worker updated successfully!');
     setShowEditModal(false);
     setSelectedWorker(null);
+    resetForm();
   };
 
   // Handle delete worker
@@ -185,6 +200,26 @@ const Workers = () => {
     toast.success('Worker status updated');
   };
 
+  // Toggle expand worker details
+  const toggleExpand = (id) => {
+    setExpandedWorker(expandedWorker === id ? null : id);
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      employeeId: '',
+      department: '',
+      position: '',
+      phone: '',
+      role: 'worker',
+      isActive: true
+    });
+  };
+
   // Filter workers
   const filteredWorkers = workers.filter(worker => {
     const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -197,17 +232,11 @@ const Workers = () => {
     return matchesSearch && matchesDepartment && matchesStatus;
   });
 
-  // Department colors
-  const deptColors = {
-    'Management': '#3B82F6',
-    'Design': '#8B5CF6',
-    'Development': '#10B981',
-    'Marketing': '#F59E0B',
-    'HR': '#EF4444',
-    'Finance': '#EC4899',
-    'Operations': '#14B8A6',
-    'Sales': '#F97316'
-  };
+  // Stats
+  const totalWorkers = workers.length;
+  const activeWorkers = workers.filter(w => w.isActive).length;
+  const inactiveWorkers = workers.filter(w => !w.isActive).length;
+  const departmentsCount = new Set(workers.map(w => w.department)).size;
 
   return (
     <div className="space-y-6">
@@ -232,29 +261,51 @@ const Workers = () => {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <GlassCard>
-          <p className="text-white/60 text-sm">Total Workers</p>
-          <p className="text-2xl font-bold text-white">{workers.length}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/60 text-sm">Total Workers</p>
+              <p className="text-2xl font-bold text-white">{totalWorkers}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+              <FaUsers className="text-white text-lg" />
+            </div>
+          </div>
         </GlassCard>
         <GlassCard>
-          <p className="text-white/60 text-sm">Active</p>
-          <p className="text-2xl font-bold text-green-400">
-            {workers.filter(w => w.isActive).length}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/60 text-sm">Active</p>
+              <p className="text-2xl font-bold text-green-400">{activeWorkers}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+              <FaUserCheck className="text-white text-lg" />
+            </div>
+          </div>
         </GlassCard>
         <GlassCard>
-          <p className="text-white/60 text-sm">Inactive</p>
-          <p className="text-2xl font-bold text-red-400">
-            {workers.filter(w => !w.isActive).length}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/60 text-sm">Inactive</p>
+              <p className="text-2xl font-bold text-red-400">{inactiveWorkers}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
+              <FaUserTimes className="text-white text-lg" />
+            </div>
+          </div>
         </GlassCard>
         <GlassCard>
-          <p className="text-white/60 text-sm">Departments</p>
-          <p className="text-2xl font-bold text-blue-400">
-            {new Set(workers.map(w => w.department)).size}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/60 text-sm">Departments</p>
+              <p className="text-2xl font-bold text-purple-400">{departmentsCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+              <FaBuilding className="text-white text-lg" />
+            </div>
+          </div>
         </GlassCard>
       </div>
 
@@ -276,13 +327,10 @@ const Workers = () => {
             value={filterDepartment}
             onChange={(e) => setFilterDepartment(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-            style={{ color: '#ffffff' }}
           >
-            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Departments</option>
+            <option value="all">All Departments</option>
             {departments.map(dept => (
-              <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                {dept}
-              </option>
+              <option key={dept} value={dept}>{dept}</option>
             ))}
           </select>
 
@@ -290,11 +338,10 @@ const Workers = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
-            style={{ color: '#ffffff' }}
           >
-            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Status</option>
-            <option value="active" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Active</option>
-            <option value="inactive" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Inactive</option>
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
       </GlassCard>
@@ -312,19 +359,20 @@ const Workers = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
                     style={{ 
                       background: `linear-gradient(135deg, ${deptColors[worker.department] || '#6B7280'}, ${deptColors[worker.department] || '#6B7280'}88)`
                     }}
                   >
-                    {worker.name.charAt(0)}
+                    {worker.avatar || worker.name.charAt(0)}
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold">{worker.name}</h3>
-                    <p className="text-white/60 text-sm">{worker.position}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-white font-semibold truncate">{worker.name}</h3>
+                    <p className="text-white/60 text-sm truncate">{worker.position}</p>
+                    <p className="text-white/40 text-xs">{worker.employeeId}</p>
                   </div>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-shrink-0">
                   <button 
                     onClick={() => {
                       setSelectedWorker(worker);
@@ -332,27 +380,28 @@ const Workers = () => {
                       setShowEditModal(true);
                     }}
                     className="p-1.5 rounded-lg hover:bg-blue-500/20 text-gray-400 hover:text-blue-400 transition-colors"
+                    title="Edit"
                   >
                     <FaEdit className="text-sm" />
                   </button>
                   <button 
                     onClick={() => handleDeleteWorker(worker.id)}
                     className="p-1.5 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                    title="Delete"
                   >
                     <FaTrash className="text-sm" />
+                  </button>
+                  <button 
+                    onClick={() => toggleExpand(worker.id)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    title="Details"
+                  >
+                    {expandedWorker === worker.id ? <FaChevronDown className="text-sm" /> : <FaChevronRight className="text-sm" />}
                   </button>
                 </div>
               </div>
 
               <div className="mt-3 space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/40">Employee ID</span>
-                  <span className="text-white/80">{worker.employeeId}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/40">Email</span>
-                  <span className="text-white/80">{worker.email}</span>
-                </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-white/40">Department</span>
                   <span 
@@ -385,7 +434,44 @@ const Workers = () => {
                     {worker.tasksCompleted}/{worker.tasksAssigned} completed
                   </span>
                 </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/40">Joined</span>
+                  <span className="text-white/80">{worker.joinDate}</span>
+                </div>
               </div>
+
+              {/* Expanded Details */}
+              <AnimatePresence>
+                {expandedWorker === worker.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 pt-3 border-t border-white/10 space-y-1.5"
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <FaEnvelope className="text-white/30" />
+                      <span className="text-white/60">{worker.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <FaPhone className="text-white/30" />
+                      <span className="text-white/60">{worker.phone || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <FaIdCard className="text-white/30" />
+                      <span className="text-white/60">ID: {worker.employeeId}</span>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button className="flex-1 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 text-xs hover:bg-blue-500/30 transition-colors">
+                        View Tasks
+                      </button>
+                      <button className="flex-1 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs hover:bg-purple-500/30 transition-colors">
+                        Send Message
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </GlassCard>
           </motion.div>
         ))}
@@ -394,22 +480,24 @@ const Workers = () => {
       {/* Add Worker Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               className="relative w-full max-w-lg"
             >
-              <GlassCard className="p-6">
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white text-lg font-semibold flex items-center gap-2">
                     <FaUserPlus className="text-blue-400" />
                     Add New Worker
                   </h3>
                   <button
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                      setShowAddModal(false);
+                      resetForm();
+                    }}
                     className="text-white/40 hover:text-white transition-colors"
                   >
                     <FaTimes />
@@ -424,7 +512,7 @@ const Workers = () => {
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter name"
                         required
                       />
@@ -435,7 +523,7 @@ const Workers = () => {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter email"
                         required
                       />
@@ -449,7 +537,7 @@ const Workers = () => {
                         type="text"
                         value={formData.employeeId}
                         onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="e.g., EMP-001"
                         required
                       />
@@ -460,7 +548,7 @@ const Workers = () => {
                         type="password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Min 6 characters"
                         required
                       />
@@ -473,15 +561,12 @@ const Workers = () => {
                       <select
                         value={formData.department}
                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{ color: '#ffffff' }}
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
-                        <option value="" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Select Department</option>
+                        <option value="">Select</option>
                         {departments.map(dept => (
-                          <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                            {dept}
-                          </option>
+                          <option key={dept} value={dept}>{dept}</option>
                         ))}
                       </select>
                     </div>
@@ -491,7 +576,7 @@ const Workers = () => {
                         type="text"
                         value={formData.position}
                         onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="e.g., UI/UX Designer"
                         required
                       />
@@ -504,16 +589,19 @@ const Workers = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter phone number"
                     />
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 mt-4">
                     <button
                       type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="flex-1 py-2 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                      onClick={() => {
+                        setShowAddModal(false);
+                        resetForm();
+                      }}
+                      className="flex-1 py-2 rounded-lg bg-gray-700 text-white/70 hover:bg-gray-600 transition-colors"
                     >
                       Cancel
                     </button>
@@ -526,7 +614,7 @@ const Workers = () => {
                     </button>
                   </div>
                 </form>
-              </GlassCard>
+              </div>
             </motion.div>
           </div>
         )}
@@ -535,22 +623,25 @@ const Workers = () => {
       {/* Edit Worker Modal */}
       <AnimatePresence>
         {showEditModal && selectedWorker && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               className="relative w-full max-w-lg"
             >
-              <GlassCard className="p-6">
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white text-lg font-semibold flex items-center gap-2">
                     <FaEdit className="text-blue-400" />
                     Edit Worker
                   </h3>
                   <button
-                    onClick={() => setShowEditModal(false)}
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setSelectedWorker(null);
+                      resetForm();
+                    }}
                     className="text-white/40 hover:text-white transition-colors"
                   >
                     <FaTimes />
@@ -565,7 +656,7 @@ const Workers = () => {
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       />
                     </div>
@@ -574,8 +665,7 @@ const Workers = () => {
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white cursor-not-allowed opacity-60"
                         disabled
                       />
                     </div>
@@ -583,41 +673,28 @@ const Workers = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-white/60 text-sm block mb-1">Employee ID</label>
-                      <input
-                        type="text"
-                        value={formData.employeeId}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled
-                      />
-                    </div>
-                    <div>
                       <label className="text-white/60 text-sm block mb-1">Department *</label>
                       <select
                         value={formData.department}
                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{ color: '#ffffff' }}
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
                         {departments.map(dept => (
-                          <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                            {dept}
-                          </option>
+                          <option key={dept} value={dept}>{dept}</option>
                         ))}
                       </select>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="text-white/60 text-sm block mb-1">Position *</label>
-                    <input
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
+                    <div>
+                      <label className="text-white/60 text-sm block mb-1">Position *</label>
+                      <input
+                        type="text"
+                        value={formData.position}
+                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -626,15 +703,19 @@ const Workers = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 mt-4">
                     <button
                       type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className="flex-1 py-2 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setSelectedWorker(null);
+                        resetForm();
+                      }}
+                      className="flex-1 py-2 rounded-lg bg-gray-700 text-white/70 hover:bg-gray-600 transition-colors"
                     >
                       Cancel
                     </button>
@@ -647,7 +728,7 @@ const Workers = () => {
                     </button>
                   </div>
                 </form>
-              </GlassCard>
+              </div>
             </motion.div>
           </div>
         )}

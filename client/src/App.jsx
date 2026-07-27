@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 
+
 // Simple test component
 const TestPage = () => {
   return (
@@ -79,6 +80,8 @@ function App() {
             <Route path="tasks" element={<Tasks />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="workers" element={<Workers />} />
+            <Route path="tasks" element={<Tasks />} />
           </Route>
 
           {/* Worker Routes */}

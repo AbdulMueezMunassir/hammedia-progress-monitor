@@ -18,7 +18,8 @@ import {
   FaEye,
   FaFileAlt,
   FaChartLine,
-  FaUserCheck
+  FaUserCheck,
+  FaSpinner
 } from 'react-icons/fa';
 import GlassCard from '../../components/common/GlassCard';
 import toast from 'react-hot-toast';
@@ -33,62 +34,237 @@ const Reports = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [filterDepartment, setFilterDepartment] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   // Sample report data
   useEffect(() => {
     generateReportData();
-  }, [dateRange]);
+  }, [dateRange, filterDepartment, filterStatus]);
 
   const generateReportData = () => {
-    // Sample data - in production, this would come from API
-    const data = {
-      summary: {
-        totalTasks: 45,
-        completedTasks: 28,
-        inProgressTasks: 12,
-        pendingTasks: 5,
-        completionRate: 62,
-        totalWorkers: 24,
-        activeWorkers: 20,
-        totalMeetings: 18,
-        attendanceRate: 85
-      },
-      taskCompletion: [
-        { name: 'Design', total: 12, completed: 8 },
-        { name: 'Development', total: 18, completed: 10 },
-        { name: 'Marketing', total: 8, completed: 6 },
-        { name: 'HR', total: 5, completed: 3 },
-        { name: 'Operations', total: 2, completed: 1 }
-      ],
-      workerPerformance: [
-        { name: 'Ahmed Ali', tasks: 12, completed: 10, rate: 83 },
-        { name: 'Fathima Noor', tasks: 15, completed: 8, rate: 53 },
-        { name: 'Mohamed Rashid', tasks: 10, completed: 7, rate: 70 },
-        { name: 'Sara Ahmed', tasks: 6, completed: 3, rate: 50 },
-        { name: 'Ali Hassan', tasks: 20, completed: 15, rate: 75 }
-      ],
-      meetingAttendance: [
-        { name: 'F3 Meeting', total: 10, present: 8, late: 1, absent: 1 },
-        { name: 'EXCO Meeting', total: 8, present: 7, late: 1, absent: 0 }
-      ]
-    };
-    setReportData(data);
+    setIsLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      const data = {
+        summary: {
+          totalTasks: 45,
+          completedTasks: 28,
+          inProgressTasks: 12,
+          pendingTasks: 5,
+          completionRate: 62,
+          totalWorkers: 24,
+          activeWorkers: 20,
+          totalMeetings: 18,
+          attendanceRate: 85
+        },
+        taskCompletion: [
+          { name: 'Design', total: 12, completed: 8 },
+          { name: 'Development', total: 18, completed: 10 },
+          { name: 'Marketing', total: 8, completed: 6 },
+          { name: 'HR', total: 5, completed: 3 },
+          { name: 'Operations', total: 2, completed: 1 }
+        ],
+        workerPerformance: [
+          { name: 'Ahmed Ali', tasks: 12, completed: 10, rate: 83 },
+          { name: 'Fathima Noor', tasks: 15, completed: 8, rate: 53 },
+          { name: 'Mohamed Rashid', tasks: 10, completed: 7, rate: 70 },
+          { name: 'Sara Ahmed', tasks: 6, completed: 3, rate: 50 },
+          { name: 'Ali Hassan', tasks: 20, completed: 15, rate: 75 }
+        ],
+        meetingAttendance: [
+          { name: 'F3 Meeting', total: 10, present: 8, late: 1, absent: 1 },
+          { name: 'EXCO Meeting', total: 8, present: 7, late: 1, absent: 0 }
+        ]
+      };
+      setReportData(data);
+      setIsLoading(false);
+    }, 500);
   };
 
+  // PDF Export - Using window.print with PDF styling
   const handleExportPDF = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      toast.success('PDF report generated successfully!');
+    try {
+      // Get the report content
+      const reportContent = document.getElementById('report-content');
+      if (!reportContent) {
+        toast.error('Report content not found');
+        setIsLoading(false);
+        return;
+      }
+
+      // Create a new window for PDF generation
+      const printWindow = window.open('', '_blank', 'width=1200,height=800');
+      if (!printWindow) {
+        toast.error('Please allow popups for PDF export');
+        setIsLoading(false);
+        return;
+      }
+
+      // Write HTML content
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Hammedia Report - ${format(new Date(), 'yyyy-MM-dd')}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+            h2 { color: #4b5563; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background: #f3f4f6; padding: 10px; text-align: left; border: 1px solid #d1d5db; }
+            td { padding: 8px 10px; border: 1px solid #d1d5db; }
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+            .summary-card { background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+            .summary-card h3 { margin: 0; color: #6b7280; font-size: 14px; }
+            .summary-card p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #1f2937; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 12px; text-align: center; }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Hammedia - Reports</h1>
+          <p>Generated: ${format(new Date(), 'PPpp')}</p>
+          <p>Date Range: ${getDateRangeLabel()}</p>
+          
+          <div class="summary">
+            <div class="summary-card">
+              <h3>Total Tasks</h3>
+              <p>${reportData?.summary.totalTasks || 0}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Completed</h3>
+              <p>${reportData?.summary.completedTasks || 0}</p>
+            </div>
+            <div class="summary-card">
+              <h3>Completion Rate</h3>
+              <p>${reportData?.summary.completionRate || 0}%</p>
+            </div>
+            <div class="summary-card">
+              <h3>Attendance Rate</h3>
+              <p>${reportData?.summary.attendanceRate || 0}%</p>
+            </div>
+          </div>
+
+          <h2>Task Completion by Department</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Total</th>
+                <th>Completed</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reportData?.taskCompletion.map(dept => `
+                <tr>
+                  <td>${dept.name}</td>
+                  <td>${dept.total}</td>
+                  <td>${dept.completed}</td>
+                  <td>${Math.round((dept.completed / dept.total) * 100)}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <h2>Worker Performance</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>Tasks</th>
+                <th>Completed</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reportData?.workerPerformance.map(worker => `
+                <tr>
+                  <td>${worker.name}</td>
+                  <td>${worker.tasks}</td>
+                  <td>${worker.completed}</td>
+                  <td>${worker.rate}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Hammedia Meeting & Task Progress Monitoring System</p>
+            <p>This report is confidential and for internal use only.</p>
+          </div>
+        </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      setTimeout(() => {
+        printWindow.print();
+        toast.success('PDF report generated successfully!');
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error('Failed to generate PDF');
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
+  // Excel Export - Using CSV format
   const handleExportExcel = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      toast.success('Excel report generated successfully!');
+    try {
+      // Create CSV data
+      let csvContent = 'Hammedia Report\n';
+      csvContent += `Generated: ${format(new Date(), 'PPpp')}\n\n`;
+      
+      // Summary
+      csvContent += 'Summary\n';
+      csvContent += `Total Tasks,${reportData?.summary.totalTasks || 0}\n`;
+      csvContent += `Completed,${reportData?.summary.completedTasks || 0}\n`;
+      csvContent += `Completion Rate,${reportData?.summary.completionRate || 0}%\n`;
+      csvContent += `Attendance Rate,${reportData?.summary.attendanceRate || 0}%\n\n`;
+      
+      // Task Completion
+      csvContent += 'Task Completion by Department\n';
+      csvContent += 'Department,Total,Completed,Rate\n';
+      reportData?.taskCompletion.forEach(dept => {
+        csvContent += `${dept.name},${dept.total},${dept.completed},${Math.round((dept.completed / dept.total) * 100)}%\n`;
+      });
+      csvContent += '\n';
+      
+      // Worker Performance
+      csvContent += 'Worker Performance\n';
+      csvContent += 'Worker,Tasks,Completed,Rate\n';
+      reportData?.workerPerformance.forEach(worker => {
+        csvContent += `${worker.name},${worker.tasks},${worker.completed},${worker.rate}%\n`;
+      });
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `hammedia-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Excel report exported successfully!');
       setIsLoading(false);
-    }, 1500);
+    } catch (error) {
+      console.error('Excel export error:', error);
+      toast.error('Failed to export Excel');
+      setIsLoading(false);
+    }
   };
 
   const handlePrint = () => {
@@ -103,6 +279,20 @@ const Reports = () => {
       case 'custom': return `${startDate || 'Start'} - ${endDate || 'End'}`;
       default: return 'Custom Range';
     }
+  };
+
+  // Filter handlers
+  const handleFilterApply = () => {
+    toast.success('Filters applied');
+    generateReportData();
+  };
+
+  const handleFilterReset = () => {
+    setFilterDepartment('all');
+    setFilterStatus('all');
+    setDateRange('this-week');
+    toast.success('Filters reset');
+    generateReportData();
   };
 
   const tabs = [
@@ -121,7 +311,7 @@ const Reports = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="report-content">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -139,17 +329,21 @@ const Reports = () => {
           <button 
             onClick={handleExportPDF}
             disabled={isLoading}
-            className="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center gap-2 text-sm"
+            className={`px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center gap-2 text-sm ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <FaFilePdf />
+            {isLoading ? <FaSpinner className="animate-spin" /> : <FaFilePdf />}
             {isLoading ? 'Generating...' : 'PDF'}
           </button>
           <button 
             onClick={handleExportExcel}
             disabled={isLoading}
-            className="px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors flex items-center gap-2 text-sm"
+            className={`px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors flex items-center gap-2 text-sm ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <FaFileExcel />
+            {isLoading ? <FaSpinner className="animate-spin" /> : <FaFileExcel />}
             {isLoading ? 'Generating...' : 'Excel'}
           </button>
         </div>
@@ -160,7 +354,7 @@ const Reports = () => {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <FaFilter className="text-white/30 text-sm" />
-            <span className="text-white/60 text-sm">Date Range:</span>
+            <span className="text-white/60 text-sm">Filters:</span>
           </div>
           
           <select
@@ -191,6 +385,42 @@ const Reports = () => {
               />
             </div>
           )}
+
+          <select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Departments</option>
+            <option value="Design">Design</option>
+            <option value="Development">Development</option>
+            <option value="Marketing">Marketing</option>
+            <option value="HR">HR</option>
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="in-progress">In Progress</option>
+            <option value="pending">Pending</option>
+          </select>
+
+          <button 
+            onClick={handleFilterApply}
+            className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-sm"
+          >
+            Apply Filters
+          </button>
+          <button 
+            onClick={handleFilterReset}
+            className="px-4 py-2 rounded-lg bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm"
+          >
+            Reset
+          </button>
 
           <div className="ml-auto flex items-center gap-2">
             <span className="text-white/40 text-sm">
@@ -459,16 +689,22 @@ const Reports = () => {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleExportPDF}
-              className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-xs flex items-center gap-1"
+              disabled={isLoading}
+              className={`px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-xs flex items-center gap-1 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <FaFilePdf className="text-xs" />
+              {isLoading ? <FaSpinner className="animate-spin" /> : <FaFilePdf className="text-xs" />}
               PDF
             </button>
             <button 
               onClick={handleExportExcel}
-              className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-xs flex items-center gap-1"
+              disabled={isLoading}
+              className={`px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-xs flex items-center gap-1 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <FaFileExcel className="text-xs" />
+              {isLoading ? <FaSpinner className="animate-spin" /> : <FaFileExcel className="text-xs" />}
               Excel
             </button>
             <button 

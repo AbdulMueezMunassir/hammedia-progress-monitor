@@ -15,12 +15,10 @@ import {
   FaFilter,
   FaTimes,
   FaSave,
-  FaDownload,
-  FaUpload,
+  FaUsers,
   FaChevronDown,
   FaChevronRight,
-  FaUsers,
-  FaUserCircle
+  FaPlusCircle
 } from 'react-icons/fa';
 import GlassCard from '../../components/common/GlassCard';
 import toast from 'react-hot-toast';
@@ -32,8 +30,10 @@ const Workers = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [expandedWorker, setExpandedWorker] = useState(null);
+  const [newDepartment, setNewDepartment] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -46,8 +46,8 @@ const Workers = () => {
     isActive: true
   });
 
-  // Departments
-  const departments = [
+  // Departments - with ability to add new ones
+  const [departments, setDepartments] = useState([
     'Management',
     'Design',
     'Development',
@@ -56,7 +56,7 @@ const Workers = () => {
     'Finance',
     'Operations',
     'Sales'
-  ];
+  ]);
 
   // Department colors
   const deptColors = {
@@ -67,7 +67,10 @@ const Workers = () => {
     'HR': '#EF4444',
     'Finance': '#EC4899',
     'Operations': '#14B8A6',
-    'Sales': '#F97316'
+    'Sales': '#F97316',
+    'E-commerce': '#06B6D4',
+    'IT': '#8B5CF6',
+    'Administration': '#F59E0B'
   };
 
   // Sample workers data
@@ -117,8 +120,8 @@ const Workers = () => {
       },
       {
         id: 4,
-        name: 'Ishfaq',
-        email: 'ishfaq@hammedia.com',
+        name: 'Sara Ahmed',
+        email: 'sara@hammedia.com',
         employeeId: 'EMP-004',
         department: 'HR',
         position: 'HR Manager',
@@ -126,7 +129,7 @@ const Workers = () => {
         isActive: true,
         joinDate: '2024-03-01',
         tasksCompleted: 3,
-        tasksAssigned: 10,
+        tasksAssigned: 6,
         avatar: 'S'
       },
       {
@@ -146,6 +149,23 @@ const Workers = () => {
     ];
     setWorkers(sampleWorkers);
   }, []);
+
+  // Handle add department
+  const handleAddDepartment = () => {
+    if (newDepartment && newDepartment.trim()) {
+      const deptName = newDepartment.trim();
+      if (!departments.includes(deptName)) {
+        setDepartments(prev => [...prev, deptName]);
+        toast.success(`Department "${deptName}" added!`);
+        setNewDepartment('');
+        setShowDepartmentModal(false);
+      } else {
+        toast.error('Department already exists');
+      }
+    } else {
+      toast.error('Please enter a department name');
+    }
+  };
 
   // Handle add worker
   const handleAddWorker = (e) => {
@@ -240,17 +260,14 @@ const Workers = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - Removed Export button */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Workers Management</h1>
           <p className="text-white/40 text-sm">Manage your team members</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-2 text-sm">
-            <FaDownload />
-            Export
-          </button>
+          {/* Removed Export button */}
           <button 
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 text-sm"
@@ -261,9 +278,12 @@ const Workers = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Clickable filters */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <GlassCard>
+        <GlassCard 
+          className="cursor-pointer hover:scale-[1.02] transition-all"
+          onClick={() => { setFilterStatus('all'); setFilterDepartment('all'); }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/60 text-sm">Total Workers</p>
@@ -274,7 +294,10 @@ const Workers = () => {
             </div>
           </div>
         </GlassCard>
-        <GlassCard>
+        <GlassCard 
+          className="cursor-pointer hover:scale-[1.02] transition-all"
+          onClick={() => { setFilterStatus('active'); setFilterDepartment('all'); }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/60 text-sm">Active</p>
@@ -285,7 +308,10 @@ const Workers = () => {
             </div>
           </div>
         </GlassCard>
-        <GlassCard>
+        <GlassCard 
+          className="cursor-pointer hover:scale-[1.02] transition-all"
+          onClick={() => { setFilterStatus('inactive'); setFilterDepartment('all'); }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/60 text-sm">Inactive</p>
@@ -296,7 +322,10 @@ const Workers = () => {
             </div>
           </div>
         </GlassCard>
-        <GlassCard>
+        <GlassCard 
+          className="cursor-pointer hover:scale-[1.02] transition-all"
+          onClick={() => { setFilterStatus('all'); setFilterDepartment('all'); }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/60 text-sm">Departments</p>
@@ -327,10 +356,13 @@ const Workers = () => {
             value={filterDepartment}
             onChange={(e) => setFilterDepartment(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Departments</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Departments</option>
             {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+              <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                {dept}
+              </option>
             ))}
           </select>
 
@@ -338,11 +370,20 @@ const Workers = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Status</option>
+            <option value="active" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Active</option>
+            <option value="inactive" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Inactive</option>
           </select>
+
+          <button 
+            onClick={() => setShowDepartmentModal(true)}
+            className="px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors flex items-center gap-2 text-sm"
+          >
+            <FaPlusCircle className="text-sm" />
+            Add Department
+          </button>
         </div>
       </GlassCard>
 
@@ -477,6 +518,95 @@ const Workers = () => {
         ))}
       </div>
 
+      {/* Add Department Modal */}
+      <AnimatePresence>
+        {showDepartmentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-md"
+            >
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white text-lg font-semibold flex items-center gap-2">
+                    <FaBuilding className="text-purple-400" />
+                    Add New Department
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowDepartmentModal(false);
+                      setNewDepartment('');
+                    }}
+                    className="text-white/40 hover:text-white transition-colors"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-white/60 text-sm block mb-1">Department Name</label>
+                    <input
+                      type="text"
+                      value={newDepartment}
+                      onChange={(e) => setNewDepartment(e.target.value)}
+                      placeholder="e.g., E-commerce, IT, Administration"
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddDepartment();
+                        }
+                      }}
+                    />
+                    <p className="text-white/30 text-xs mt-1">Press Enter or click Add to save</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowDepartmentModal(false);
+                        setNewDepartment('');
+                      }}
+                      className="flex-1 py-2 rounded-lg bg-gray-700 text-white/70 hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddDepartment}
+                      className="flex-1 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
+                    >
+                      <FaPlus />
+                      Add Department
+                    </button>
+                  </div>
+
+                  {/* Existing Departments */}
+                  <div className="mt-4 pt-4 border-t border-gray-700">
+                    <p className="text-white/40 text-xs mb-2">Current Departments ({departments.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {departments.map((dept) => (
+                        <span 
+                          key={dept}
+                          className="px-2 py-0.5 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: `${deptColors[dept] || '#6B7280'}22`,
+                            color: deptColors[dept] || '#6B7280'
+                          }}
+                        >
+                          {dept}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Add Worker Modal */}
       <AnimatePresence>
         {showAddModal && (
@@ -558,17 +688,30 @@ const Workers = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-white/60 text-sm block mb-1">Department *</label>
-                      <select
-                        value={formData.department}
-                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Select</option>
-                        {departments.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
-                        ))}
-                      </select>
+                      <div className="flex gap-2">
+                        <select
+                          value={formData.department}
+                          onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          style={{ color: '#ffffff' }}
+                          required
+                        >
+                          <option value="" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Select</option>
+                          {departments.map(dept => (
+                            <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setShowDepartmentModal(true)}
+                          className="px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                          title="Add new department"
+                        >
+                          <FaPlus />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="text-white/60 text-sm block mb-1">Position *</label>
@@ -674,16 +817,29 @@ const Workers = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-white/60 text-sm block mb-1">Department *</label>
-                      <select
-                        value={formData.department}
-                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        {departments.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
-                        ))}
-                      </select>
+                      <div className="flex gap-2">
+                        <select
+                          value={formData.department}
+                          onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          style={{ color: '#ffffff' }}
+                          required
+                        >
+                          {departments.map(dept => (
+                            <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setShowDepartmentModal(true)}
+                          className="px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                          title="Add new department"
+                        >
+                          <FaPlus />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="text-white/60 text-sm block mb-1">Position *</label>

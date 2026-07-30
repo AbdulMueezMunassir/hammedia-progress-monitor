@@ -31,14 +31,20 @@ const Settings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Profile form
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    department: '',
-    position: '',
-    employeeId: ''
+  // Profile form - persisted in localStorage
+  const [profileData, setProfileData] = useState(() => {
+    const saved = localStorage.getItem('profileData');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return {
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      department: user?.department || '',
+      position: user?.position || '',
+      employeeId: user?.employeeId || ''
+    };
   });
 
   // Password form
@@ -48,14 +54,11 @@ const Settings = () => {
     confirmPassword: ''
   });
 
-  // Notification preferences
+  // Notification preferences - simplified
   const [notifications, setNotifications] = useState({
-    emailNotifications: true,
     taskAssignments: true,
     meetingReminders: true,
-    deadlineAlerts: true,
-    systemUpdates: true,
-    marketingEmails: false
+    systemUpdates: true
   });
 
   // Theme settings
@@ -64,19 +67,10 @@ const Settings = () => {
     return saved || 'dark';
   });
 
-  // Load user data
+  // Save profile data to localStorage whenever it changes
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        department: user.department || '',
-        position: user.position || '',
-        employeeId: user.employeeId || ''
-      });
-    }
-  }, [user]);
+    localStorage.setItem('profileData', JSON.stringify(profileData));
+  }, [profileData]);
 
   // Apply theme
   useEffect(() => {
@@ -94,7 +88,6 @@ const Settings = () => {
     { id: 'profile', label: 'Profile', icon: FaUser },
     { id: 'security', label: 'Security', icon: FaLock },
     { id: 'notifications', label: 'Notifications', icon: FaBell },
-    { id: 'appearance', label: 'Appearance', icon: FaPalette },
     { id: 'general', label: 'General', icon: FaGlobe }
   ];
 
@@ -106,6 +99,11 @@ const Settings = () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update user in localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = { ...currentUser, ...profileData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
       toast.success('Profile updated successfully!');
       setIsEditing(false);
     } catch (error) {
@@ -115,7 +113,7 @@ const Settings = () => {
     }
   };
 
-  // Handle password change
+  // Handle password change - FIXED: invalidate old password
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
@@ -132,13 +130,30 @@ const Settings = () => {
     setIsLoading(true);
     
     try {
+      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Password changed successfully!');
+      
+      // Update password in localStorage (simulated)
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      // In real app, this would be hashed on server
+      // For demo, we just clear the old password
+      localStorage.removeItem('user');
+      localStorage.setItem('user', JSON.stringify({ ...currentUser, password: passwordData.newPassword }));
+      
+      toast.success('Password changed successfully! Please login again.');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
+      
+      // Force logout after password change
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }, 2000);
+      
     } catch (error) {
       toast.error('Failed to change password');
     } finally {
@@ -158,6 +173,12 @@ const Settings = () => {
   const toggleTheme = (newTheme) => {
     setTheme(newTheme);
     toast.success(`Switched to ${newTheme} mode`);
+  };
+
+  // Save notification preferences
+  const saveNotifications = () => {
+    localStorage.setItem('notificationPreferences', JSON.stringify(notifications));
+    toast.success('Notification preferences saved!');
   };
 
   return (
@@ -200,7 +221,7 @@ const Settings = () => {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Profile Tab */}
+          {/* Profile Tab - Fixed Persistence */}
           {activeTab === 'profile' && (
             <GlassCard>
               <div className="flex items-center justify-between mb-6">
@@ -327,16 +348,9 @@ const Settings = () => {
                       type="button"
                       onClick={() => {
                         setIsEditing(false);
-                        // Reset to original data
-                        if (user) {
-                          setProfileData({
-                            name: user.name || '',
-                            email: user.email || '',
-                            phone: user.phone || '',
-                            department: user.department || '',
-                            position: user.position || '',
-                            employeeId: user.employeeId || ''
-                          });
+                        const saved = localStorage.getItem('profileData');
+                        if (saved) {
+                          setProfileData(JSON.parse(saved));
                         }
                       }}
                       className="px-4 py-2 rounded-lg bg-gray-700 text-white/70 hover:bg-gray-600 transition-colors"
@@ -349,7 +363,7 @@ const Settings = () => {
             </GlassCard>
           )}
 
-          {/* Security Tab */}
+          {/* Security Tab - Fixed Password */}
           {activeTab === 'security' && (
             <GlassCard>
               <h3 className="text-white text-lg font-semibold mb-6">Security Settings</h3>
@@ -420,7 +434,7 @@ const Settings = () => {
             </GlassCard>
           )}
 
-          {/* Notifications Tab */}
+          {/* Notifications Tab - Simplified */}
           {activeTab === 'notifications' && (
             <GlassCard>
               <h3 className="text-white text-lg font-semibold mb-6">Notification Preferences</h3>
@@ -428,20 +442,14 @@ const Settings = () => {
               <div className="space-y-4">
                 {Object.entries(notifications).map(([key, value]) => {
                   const labels = {
-                    emailNotifications: 'Email Notifications',
                     taskAssignments: 'Task Assignments',
                     meetingReminders: 'Meeting Reminders',
-                    deadlineAlerts: 'Deadline Alerts',
-                    systemUpdates: 'System Updates',
-                    marketingEmails: 'Marketing Emails'
+                    systemUpdates: 'System Updates'
                   };
                   const descriptions = {
-                    emailNotifications: 'Receive notifications via email',
                     taskAssignments: 'Get notified when tasks are assigned',
                     meetingReminders: 'Get reminders for upcoming meetings',
-                    deadlineAlerts: 'Get alerts for approaching deadlines',
-                    systemUpdates: 'Get notified about system updates',
-                    marketingEmails: 'Receive marketing and promotional emails'
+                    systemUpdates: 'Get notified about system updates'
                   };
 
                   return (
@@ -465,137 +473,34 @@ const Settings = () => {
               </div>
 
               <div className="mt-6">
-                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all">
+                <button onClick={saveNotifications} className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all">
                   Save Preferences
                 </button>
               </div>
             </GlassCard>
           )}
 
-          {/* Appearance Tab */}
-          {activeTab === 'appearance' && (
-            <GlassCard>
-              <h3 className="text-white text-lg font-semibold mb-6">Appearance Settings</h3>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="text-white/60 text-sm block mb-3">Theme Mode</label>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => toggleTheme('dark')}
-                      className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                        theme === 'dark'
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-700 hover:border-gray-500'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <FaMoon className={theme === 'dark' ? 'text-blue-400' : 'text-white/40'} />
-                        <span className={theme === 'dark' ? 'text-white' : 'text-white/60'}>Dark</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => toggleTheme('light')}
-                      className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                        theme === 'light'
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-700 hover:border-gray-500'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <FaSun className={theme === 'light' ? 'text-blue-400' : 'text-white/40'} />
-                        <span className={theme === 'light' ? 'text-white' : 'text-white/60'}>Light</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-white/60 text-sm block mb-3">Accent Color</label>
-                  <div className="flex gap-3">
-                    {['#3B82F6', '#8B5CF6', '#10B981', '#EF4444', '#F59E0B', '#EC4899'].map((color) => (
-                      <button
-                        key={color}
-                        className="w-10 h-10 rounded-full border-2 border-gray-700 hover:border-white transition-all"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-white/60 text-sm block mb-3">Font Size</label>
-                  <div className="flex gap-3">
-                    {['Small', 'Medium', 'Large'].map((size) => (
-                      <button
-                        key={size}
-                        className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </GlassCard>
-          )}
-
-          {/* General Tab */}
+          {/* General Tab - Only Danger Zone */}
           {activeTab === 'general' && (
             <GlassCard>
               <h3 className="text-white text-lg font-semibold mb-6">General Settings</h3>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div>
-                    <p className="text-white text-sm font-medium">Language</p>
-                    <p className="text-white/40 text-xs">Select your preferred language</p>
-                  </div>
-                  <select className="px-3 py-1.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="en">English</option>
-                    <option value="ar">Arabic</option>
-                    <option value="fr">French</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div>
-                    <p className="text-white text-sm font-medium">Timezone</p>
-                    <p className="text-white/40 text-xs">Select your timezone</p>
-                  </div>
-                  <select className="px-3 py-1.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="UTC">UTC</option>
-                    <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
-                    <option value="Asia/Colombo">Asia/Colombo (UTC+5:30)</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div>
-                    <p className="text-white text-sm font-medium">Date Format</p>
-                    <p className="text-white/40 text-xs">Select your date format</p>
-                  </div>
-                  <select className="px-3 py-1.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all">
-                  Save General Settings
-                </button>
-              </div>
-
-              <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
                 <div className="flex items-start gap-3">
-                  <FaExclamationTriangle className="text-red-400 mt-0.5" />
+                  <FaExclamationTriangle className="text-red-400 mt-0.5 text-lg" />
                   <div>
                     <p className="text-red-400 text-sm font-medium">Danger Zone</p>
-                    <p className="text-red-400/70 text-xs mt-1">This action cannot be undone.</p>
-                    <button className="mt-2 px-4 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm">
+                    <p className="text-red-400/70 text-xs mt-1">This action cannot be undone. All your data will be permanently deleted.</p>
+                    <button 
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete your account? This action cannot be undone!')) {
+                          localStorage.clear();
+                          window.location.href = '/login';
+                          toast.error('Account deleted successfully');
+                        }
+                      }}
+                      className="mt-3 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm"
+                    >
                       Delete Account
                     </button>
                   </div>

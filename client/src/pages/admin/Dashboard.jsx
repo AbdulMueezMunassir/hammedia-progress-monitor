@@ -1,55 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import toast from 'react-hot-toast';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { 
   FaUsers, 
   FaTasks, 
   FaCheckCircle, 
-  FaClock, 
-  FaExclamationTriangle,
-  FaCalendarAlt,
   FaChartLine,
-  FaArrowUp,
-  FaArrowDown,
-  FaFilter,
   FaSearch,
-  FaBell,
+  FaFilter,
   FaEye,
-  FaPlus,
-  FaEllipsisV,
+  FaListUl,
+  FaCalendarAlt,
+  FaClock,
+  FaExclamationTriangle,
   FaChevronDown,
   FaChevronRight,
-  FaTimes
+  FaBell,
+  FaMoon,
+  FaSun
 } from 'react-icons/fa';
-
-// Components
 import GlassCard from '../../components/common/GlassCard';
 import Loader from '../../components/common/Loader';
 import { fetchCompleteDashboard } from '../../redux/slices/dashboardSlice';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { dashboardData, loading, error } = useSelector((state) => state.dashboard);
   const { user } = useSelector((state) => state.auth);
-  
-  // State
-  const [selectedView, setSelectedView] = useState('board');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedView, setSelectedView] = useState('board');
+  const [filterDepartment, setFilterDepartment] = useState('all');
   const [expandedDepartments, setExpandedDepartments] = useState({});
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   useEffect(() => {
     dispatch(fetchCompleteDashboard());
   }, [dispatch]);
 
-  // Toggle department expansion
   const toggleDepartment = (deptId) => {
     setExpandedDepartments(prev => ({
       ...prev,
@@ -57,36 +47,20 @@ const Dashboard = () => {
     }));
   };
 
-  // Handle stats card click
-  const handleStatsClick = (statId) => {
-    switch(statId) {
-      case 'workers':
-        navigate('/admin/workers');
-        toast.success('Navigating to Workers...');
-        break;
-      case 'active-tasks':
-        navigate('/admin/tasks');
-        toast.success('Navigating to Tasks...');
-        break;
-      case 'completed':
-        navigate('/admin/tasks');
-        toast.success('Navigating to Completed Tasks...');
-        break;
-      case 'completion-rate':
-        navigate('/admin/reports');
-        toast.success('Navigating to Reports...');
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Data
   const data = dashboardData?.data || {};
   const summary = data.summary || {};
   const departments = data.departments || [];
   const recentActivity = data.recentActivity || [];
   const meetings = data.meetings || [];
+  const actionItems = data.actionItems || { byStatus: {} };
+
+  // Filter departments based on search and department filter
+  const filteredDepartments = departments.filter(dept => {
+    const deptName = dept.department?.name?.toLowerCase() || '';
+    const matchesSearch = deptName.includes(searchTerm.toLowerCase()) || searchTerm === '';
+    const matchesFilter = filterDepartment === 'all' || dept.department?.id === filterDepartment;
+    return matchesSearch && matchesFilter;
+  });
 
   // Department colors
   const deptColors = {
@@ -100,15 +74,6 @@ const Dashboard = () => {
     'Sales': '#F97316'
   };
 
-  const statusColors = {
-    'not-started': 'bg-gray-500',
-    'on-going': 'bg-yellow-500',
-    'stuck': 'bg-red-500',
-    'hold': 'bg-orange-500',
-    'complete': 'bg-green-500',
-    'dropped': 'bg-gray-400'
-  };
-
   const statusLabels = {
     'not-started': 'Not Started',
     'on-going': 'On Going',
@@ -118,7 +83,16 @@ const Dashboard = () => {
     'dropped': 'Dropped'
   };
 
-  // Stats cards
+  const statusColors = {
+    'not-started': 'bg-gray-500',
+    'on-going': 'bg-yellow-500',
+    'stuck': 'bg-red-500',
+    'hold': 'bg-orange-500',
+    'complete': 'bg-green-500',
+    'dropped': 'bg-gray-400'
+  };
+
+  // Stats cards with navigation
   const statsCards = [
     { 
       id: 'workers',
@@ -126,7 +100,7 @@ const Dashboard = () => {
       value: summary.totalWorkers || 0, 
       icon: FaUsers, 
       color: 'from-blue-500 to-blue-600',
-      onClick: () => handleStatsClick('workers')
+      onClick: () => navigate('/admin/workers')
     },
     { 
       id: 'active-tasks',
@@ -134,7 +108,7 @@ const Dashboard = () => {
       value: summary.inProgressTasks || 0, 
       icon: FaTasks, 
       color: 'from-purple-500 to-purple-600',
-      onClick: () => handleStatsClick('active-tasks')
+      onClick: () => navigate('/admin/tasks')
     },
     { 
       id: 'completed',
@@ -142,7 +116,7 @@ const Dashboard = () => {
       value: summary.completedTasks || 0, 
       icon: FaCheckCircle, 
       color: 'from-green-500 to-green-600',
-      onClick: () => handleStatsClick('completed')
+      onClick: () => navigate('/admin/tasks')
     },
     { 
       id: 'completion-rate',
@@ -150,238 +124,25 @@ const Dashboard = () => {
       value: `${summary.completionRate || 0}%`, 
       icon: FaChartLine, 
       color: 'from-orange-500 to-orange-600',
-      onClick: () => handleStatsClick('completion-rate')
+      onClick: () => navigate('/admin/reports')
     },
   ];
 
-  // Notifications
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New task assigned', message: 'You have been assigned to "Dashboard UI Design"', time: new Date(), read: false, type: 'task' },
-    { id: 2, title: 'Meeting reminder', message: 'Weekly F3 meeting in 30 minutes', time: new Date(Date.now() - 1800000), read: false, type: 'meeting' },
-    { id: 3, title: 'Task completed', message: 'Ahmed completed "Backend API Integration"', time: new Date(Date.now() - 3600000), read: true, type: 'task' },
-  ]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = (id) => {
-    setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  // Mock action items for demonstration
-  const mockActionItems = [
-    { id: 1, title: 'Complete dashboard redesign', status: 'on-going', priority: 'high', department: 'Design', owner: 'Ahmed', deadline: '2024-07-20' },
-    { id: 2, title: 'API integration for auth', status: 'not-started', priority: 'high', department: 'Development', owner: 'Fathima', deadline: '2024-07-25' },
-    { id: 3, title: 'User testing feedback', status: 'complete', priority: 'medium', department: 'Design', owner: 'Sara', deadline: '2024-07-15' },
-    { id: 4, title: 'Documentation update', status: 'hold', priority: 'low', department: 'Development', owner: 'Mohamed', deadline: '2024-07-30' },
-    { id: 5, title: 'Deployment preparation', status: 'stuck', priority: 'urgent', department: 'Operations', owner: 'Ali', deadline: '2024-07-18' },
-  ];
-
-  if (loading) {
-    return <Loader />;
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-400 text-xl">Error loading dashboard</div>
-        <p className="text-white/60 mt-2">{error}</p>
-        <button 
-          onClick={() => dispatch(fetchCompleteDashboard())}
-          className="mt-4 btn-primary"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  if (loading) return <Loader />;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="text-white/40 text-sm">
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
-            <span className="text-white/40 text-xs">👋</span>
-            <span className="text-white/80 text-sm">Welcome, {user?.name || 'Admin'}</span>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-white/40 text-sm">
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </p>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          {/* View toggle */}
-          <div className="flex rounded-lg bg-white/5 p-0.5">
-            <button
-              onClick={() => setSelectedView('board')}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                selectedView === 'board' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Board
-            </button>
-            <button
-              onClick={() => setSelectedView('list')}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                selectedView === 'list' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              List
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 w-40 md:w-56"
-            />
-          </div>
-
-          {/* Filter Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-2 text-sm"
-            >
-              <FaFilter />
-              Filter
-              <FaChevronDown className="text-xs" />
-            </button>
-            
-            <AnimatePresence>
-              {showFilterDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-64 glass rounded-xl border border-white/10 shadow-xl z-50 p-4"
-                >
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-white/60 text-xs block mb-1">Status</label>
-                      <select 
-                        value={selectedStatus}
-                        onChange={(e) => setSelectedStatus(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                      >
-                        <option value="all">All Status</option>
-                        {Object.entries(statusLabels).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-white/60 text-xs block mb-1">Department</label>
-                      <select 
-                        value={selectedDepartment}
-                        onChange={(e) => setSelectedDepartment(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                      >
-                        <option value="all">All Departments</option>
-                        {departments.map((dept, idx) => (
-                          <option key={idx} value={dept.department?.id || idx}>
-                            {dept.department?.name || 'Department'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button 
-                      onClick={() => setShowFilterDropdown(false)}
-                      className="w-full btn-primary text-sm py-1.5"
-                    >
-                      Apply Filters
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors relative"
-            >
-              <FaBell className="text-lg" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            <AnimatePresence>
-              {showNotifications && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-80 glass rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden"
-                >
-                  <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 className="text-white font-semibold">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllAsRead}
-                        className="text-white/40 text-xs hover:text-white transition-colors"
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <p className="text-white/40 text-sm text-center py-4">No notifications</p>
-                    ) : (
-                      notifications.map((notif) => (
-                        <div 
-                          key={notif.id}
-                          onClick={() => markAsRead(notif.id)}
-                          className={`p-4 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 ${
-                            !notif.read ? 'bg-blue-500/5 border-l-2 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              notif.type === 'task' ? 'bg-blue-500' :
-                              notif.type === 'meeting' ? 'bg-purple-500' :
-                              'bg-green-500'
-                            }`} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium">{notif.title}</p>
-                              <p className="text-white/60 text-xs mt-0.5">{notif.message}</p>
-                              <p className="text-white/30 text-xs mt-1">
-                                {formatDistanceToNow(notif.time, { addSuffix: true })}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+          <span className="text-white/40 text-xs">👋</span>
+          <span className="text-white/80 text-sm">Welcome, {user?.name || 'Admin'}</span>
         </div>
       </div>
 
@@ -414,196 +175,262 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Department Boards */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Department Boards</h3>
-            <span className="text-white/40 text-sm">{departments.length} departments</span>
+      {/* Search and Filters */}
+      <GlassCard className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px] relative">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm" />
+            <input
+              type="text"
+              placeholder="Search departments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
-          <div className="space-y-4">
-            {departments.length === 0 ? (
-              <GlassCard>
-                <p className="text-white/40 text-sm text-center py-4">No departments available</p>
-              </GlassCard>
-            ) : (
-              departments.map((dept, index) => {
-                const deptId = dept.department?.id || `dept-${index}`;
-                const isExpanded = expandedDepartments[deptId] || false;
-                const deptName = dept.department?.name || 'Department';
-                const color = deptColors[deptName] || '#6B7280';
-                
-                return (
-                  <motion.div
-                    key={deptId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <GlassCard className="overflow-hidden">
-                      {/* Department Header */}
-                      <div 
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleDepartment(deptId)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: color }}
-                          />
-                          <h4 className="text-white font-medium">{deptName}</h4>
-                          <span className="text-white/30 text-xs">{dept.department?.code || ''}</span>
-                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/60">
-                            {dept.stats?.total || 0} items
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/40 text-xs">
-                              {dept.stats?.completionRate || 0}% complete
-                            </span>
-                            <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full rounded-full transition-all duration-500"
-                                style={{ 
-                                  width: `${dept.stats?.completionRate || 0}%`,
-                                  backgroundColor: color
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <button className="text-white/40 hover:text-white transition-colors">
-                            {isExpanded ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
-                          </button>
-                        </div>
-                      </div>
+          {/* View Toggle - Working */}
+          <div className="flex rounded-lg bg-white/5 p-0.5">
+            <button
+              onClick={() => setSelectedView('board')}
+              className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
+                selectedView === 'board' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <FaListUl className="inline mr-1" />
+              Board
+            </button>
+            <button
+              onClick={() => setSelectedView('list')}
+              className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
+                selectedView === 'list' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <FaEye className="inline mr-1" />
+              List
+            </button>
+          </div>
 
-                      {/* Items List */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mt-3 space-y-1.5"
-                          >
-                            {mockActionItems
-                              .filter(item => item.department === deptName)
-                              .map((item) => (
-                                <div 
-                                  key={item.id}
-                                  className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-gray-500'}`} />
-                                    <span className="text-white text-sm truncate">{item.title}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className="text-white/30 text-xs">{item.owner}</span>
-                                    <select 
-                                      className="bg-white/10 text-white text-xs rounded px-1.5 py-0.5 border border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                      defaultValue={item.status}
-                                    >
-                                      {Object.entries(statusLabels).map(([key, label]) => (
-                                        <option key={key} value={key}>{label}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </div>
-                              ))}
-                            {mockActionItems.filter(item => item.department === deptName).length === 0 && (
-                              <p className="text-white/30 text-sm text-center py-2">No items in this department</p>
-                            )}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </GlassCard>
-                  </motion.div>
-                );
-              })
+          {/* Department Filter - Working */}
+          <select 
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+            style={{ color: '#ffffff' }}
+          >
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Departments</option>
+            {departments.map((dept, idx) => {
+              const deptName = dept.department?.name || 'Department';
+              return (
+                <option key={idx} value={dept.department?.id || idx} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                  {deptName}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      </GlassCard>
+
+      {/* Department Boards - Board View */}
+      {selectedView === 'board' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Department Boards</h3>
+            <span className="text-white/40 text-sm">{filteredDepartments.length} departments</span>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredDepartments.map((dept, index) => {
+              const deptId = dept.department?.id || `dept-${index}`;
+              const isExpanded = expandedDepartments[deptId] || false;
+              const deptName = dept.department?.name || 'Department';
+              const color = deptColors[deptName] || '#6B7280';
+              
+              return (
+                <motion.div
+                  key={deptId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <GlassCard className="overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between cursor-pointer p-3"
+                      onClick={() => toggleDepartment(deptId)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        <h4 className="text-white font-medium">{deptName}</h4>
+                        <span className="text-white/30 text-xs">{dept.department?.code || ''}</span>
+                        <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/60">
+                          {dept.stats?.total || 0} items
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-white/40 text-xs">
+                          {dept.stats?.completionRate || 0}% complete
+                        </span>
+                        <button className="text-white/40 hover:text-white transition-colors">
+                          {isExpanded ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="p-3 pt-0 border-t border-white/5 mt-2">
+                        <div className="text-white/60 text-sm">No items to display</div>
+                      </div>
+                    )}
+                  </GlassCard>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* List View */}
+      {selectedView === 'list' && (
+        <GlassCard>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-800/30">
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Department</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Code</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Total Items</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Completion</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDepartments.map((dept, index) => {
+                  const deptName = dept.department?.name || 'Department';
+                  const color = deptColors[deptName] || '#6B7280';
+                  const completionRate = dept.stats?.completionRate || 0;
+                  
+                  return (
+                    <tr key={index} className="border-b border-gray-700/50 hover:bg-white/5 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                          <span className="text-white">{deptName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-gray-300">{dept.department?.code || '-'}</td>
+                      <td className="py-3 px-4 text-gray-300">{dept.stats?.total || 0}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-purple-500"
+                              style={{ width: `${completionRate}%` }}
+                            />
+                          </div>
+                          <span className="text-gray-400 text-xs">{completionRate}%</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          completionRate >= 70 ? 'bg-green-500/20 text-green-400' :
+                          completionRate >= 40 ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {completionRate >= 70 ? 'Good' :
+                           completionRate >= 40 ? 'Average' : 'Needs Attention'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Action Items & Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Action Items */}
+        <GlassCard>
+          <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+            <FaExclamationTriangle className="text-yellow-400 text-sm" />
+            Action Items
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(statusLabels).map(([key, label]) => {
+              const count = actionItems.byStatus?.[key] || 0;
+              return (
+                <div key={key} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${statusColors[key] || 'bg-gray-500'}`} />
+                    <span className="text-white/60 text-xs">{label}</span>
+                  </div>
+                  <span className="text-white font-medium text-sm">{count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        {/* Recent Activity */}
+        <GlassCard>
+          <h4 className="text-white font-medium mb-3">Recent Activity</h4>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {recentActivity.length === 0 ? (
+              <p className="text-white/30 text-sm text-center py-2">No recent activity</p>
+            ) : (
+              recentActivity.slice(0, 5).map((activity, index) => (
+                <div key={index} className="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-sm truncate">{activity.title || 'Activity'}</p>
+                    <p className="text-white/30 text-xs">
+                      {activity.user} • {activity.time ? format(new Date(activity.time), 'MMM d, h:mm a') : 'Just now'}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
-        </div>
+        </GlassCard>
 
-        {/* Right Column */}
-        <div className="space-y-4">
-          {/* Action Items Overview */}
-          <GlassCard>
-            <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-              <FaExclamationTriangle className="text-yellow-400 text-sm" />
-              Action Items
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(statusLabels).map(([key, label]) => {
-                const count = mockActionItems.filter(i => i.status === key).length;
-                return (
-                  <div key={key} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${statusColors[key]}`} />
-                      <span className="text-white/60 text-xs">{label}</span>
-                    </div>
-                    <span className="text-white font-medium text-sm">{count}</span>
+        {/* Upcoming Meetings */}
+        <GlassCard>
+          <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+            <FaCalendarAlt className="text-purple-400 text-sm" />
+            Upcoming Meetings
+          </h4>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {meetings.length === 0 ? (
+              <p className="text-white/30 text-sm text-center py-2">No meetings scheduled</p>
+            ) : (
+              meetings.slice(0, 4).map((meeting, index) => (
+                <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <div>
+                    <p className="text-white/80 text-sm">{meeting.title || 'Meeting'}</p>
+                    <p className="text-white/30 text-xs">
+                      {meeting.date ? format(new Date(meeting.date), 'MMM d, h:mm a') : 'TBD'}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </GlassCard>
-
-          {/* Recent Activity */}
-          <GlassCard>
-            <h4 className="text-white font-medium mb-3">Recent Activity</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {recentActivity.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-2">No recent activity</p>
-              ) : (
-                recentActivity.slice(0, 5).map((activity, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/80 text-sm truncate">{activity.title || 'Activity'}</p>
-                      <p className="text-white/30 text-xs">
-                        {activity.user} • {activity.time ? formatDistanceToNow(new Date(activity.time), { addSuffix: true }) : 'Just now'}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </GlassCard>
-
-          {/* Upcoming Meetings */}
-          <GlassCard>
-            <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-              <FaCalendarAlt className="text-purple-400 text-sm" />
-              Upcoming Meetings
-            </h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {meetings.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-2">No meetings scheduled</p>
-              ) : (
-                meetings.slice(0, 4).map((meeting, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
-                    <div>
-                      <p className="text-white/80 text-sm">{meeting.title || 'Meeting'}</p>
-                      <p className="text-white/30 text-xs">
-                        {meeting.date ? format(new Date(meeting.date), 'MMM d, h:mm a') : 'TBD'}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      meeting.type === 'F3' 
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-purple-500/20 text-purple-400'
-                    }`}>
-                      {meeting.type || 'F3'}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </GlassCard>
-        </div>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    meeting.type === 'F3' 
+                      ? 'bg-blue-500/20 text-blue-400'
+                      : 'bg-purple-500/20 text-purple-400'
+                  }`}>
+                    {meeting.type || 'F3'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </GlassCard>
       </div>
     </div>
   );

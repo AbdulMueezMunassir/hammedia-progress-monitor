@@ -19,7 +19,6 @@ import {
   FaCalendarAlt,
   FaFlag,
   FaFilter,
-  FaDownload,
   FaSave
 } from 'react-icons/fa';
 import GlassCard from '../../components/common/GlassCard';
@@ -194,22 +193,13 @@ const Tasks = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - Removed New Task and Export buttons */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Tasks Management</h1>
           <p className="text-white/40 text-sm">View and manage all tasks across departments</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors flex items-center gap-2 text-sm">
-            <FaDownload />
-            Export
-          </button>
-          <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 text-sm">
-            <FaPlus />
-            New Task
-          </button>
-        </div>
+        {/* Removed New Task and Export buttons */}
       </div>
 
       {/* Stats Cards */}
@@ -254,10 +244,13 @@ const Tasks = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Status</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Status</option>
             {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-              <option key={key} value={key}>{val.label}</option>
+              <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                {val.label}
+              </option>
             ))}
           </select>
 
@@ -265,10 +258,13 @@ const Tasks = () => {
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Priority</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Priority</option>
             {Object.entries(PRIORITY_CONFIG).map(([key, val]) => (
-              <option key={key} value={key}>{val.label}</option>
+              <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                {val.label}
+              </option>
             ))}
           </select>
 
@@ -276,10 +272,13 @@ const Tasks = () => {
             value={filterDepartment}
             onChange={(e) => setFilterDepartment(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+            style={{ color: '#ffffff' }}
           >
-            <option value="all">All Departments</option>
+            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Departments</option>
             {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+              <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                {dept}
+              </option>
             ))}
           </select>
         </div>
@@ -335,14 +334,13 @@ const Tasks = () => {
                       <select
                         value={task.status}
                         onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                        className="bg-gray-800 text-white text-xs rounded px-2 py-1 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
-                        style={{ 
-                          backgroundColor: '#1e293b',
-                          color: '#ffffff'
-                        }}
+                        className="bg-gray-800 text-white text-sm rounded px-2 py-1 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[110px]"
+                        style={{ backgroundColor: '#1e293b', color: '#ffffff' }}
                       >
                         {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-                          <option key={key} value={key}>{val.label}</option>
+                          <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                            {val.label}
+                          </option>
                         ))}
                       </select>
                     </td>
@@ -370,7 +368,7 @@ const Tasks = () => {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button 
                           onClick={() => {
                             setSelectedTask(task);
@@ -577,9 +575,12 @@ const Tasks = () => {
                         value={editFormData.status || 'pending'}
                         onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
                         className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#ffffff' }}
                       >
                         {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-                          <option key={key} value={key}>{val.label}</option>
+                          <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                            {val.label}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -589,9 +590,12 @@ const Tasks = () => {
                         value={editFormData.priority || 'medium'}
                         onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value })}
                         className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#ffffff' }}
                       >
                         {Object.entries(PRIORITY_CONFIG).map(([key, val]) => (
-                          <option key={key} value={key}>{val.label}</option>
+                          <option key={key} value={key} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                            {val.label}
+                          </option>
                         ))}
                       </select>
                     </div>

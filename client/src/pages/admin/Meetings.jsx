@@ -39,7 +39,7 @@ const Meetings = () => {
         </div>
         <div className="flex items-center gap-2 text-white/30 text-xs">
           <FaInfoCircle />
-          <span>Double-click to edit | Click + on task for subitems</span>
+          <span>Click + on task to add subtasks | Escalated tasks show →</span>
         </div>
       </div>
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaBell, FaTimes, FaCheckCircle, FaComment, FaPaperclip, FaPlay, FaPause, FaTrash } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheckCircle, FaComment, FaPaperclip, FaPlay, FaPause } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
-import toast from 'react-hot-toast';
 
 const AdminNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -10,8 +9,8 @@ const AdminNotifications = () => {
 
   useEffect(() => {
     loadNotifications();
-    // Check for new notifications every 3 seconds
-    const interval = setInterval(loadNotifications, 3000);
+    // Check for new notifications every 5 seconds
+    const interval = setInterval(loadNotifications, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -38,29 +37,12 @@ const AdminNotifications = () => {
     toast.success('All notifications marked as read');
   };
 
-  const clearAll = () => {
-    if (window.confirm('Clear all notifications?')) {
-      localStorage.setItem('adminNotifications', JSON.stringify([]));
-      setNotifications([]);
-      setUnreadCount(0);
-      toast.success('All notifications cleared');
-    }
-  };
-
   const getIcon = (action) => {
-    const lowerAction = action.toLowerCase();
-    if (lowerAction.includes('complete') || lowerAction.includes('completed')) 
-      return <FaCheckCircle className="text-green-400" />;
-    if (lowerAction.includes('comment')) 
-      return <FaComment className="text-blue-400" />;
-    if (lowerAction.includes('attach') || lowerAction.includes('file')) 
-      return <FaPaperclip className="text-purple-400" />;
-    if (lowerAction.includes('start')) 
-      return <FaPlay className="text-green-400" />;
-    if (lowerAction.includes('pause')) 
-      return <FaPause className="text-yellow-400" />;
-    if (lowerAction.includes('progress')) 
-      return <FaPlay className="text-cyan-400" />;
+    if (action.includes('completed') || action.includes('Complete')) return <FaCheckCircle className="text-green-400" />;
+    if (action.includes('comment')) return <FaComment className="text-blue-400" />;
+    if (action.includes('attachment')) return <FaPaperclip className="text-purple-400" />;
+    if (action.includes('started')) return <FaPlay className="text-green-400" />;
+    if (action.includes('paused')) return <FaPause className="text-yellow-400" />;
     return <FaBell className="text-gray-400" />;
   };
 
@@ -80,7 +62,7 @@ const AdminNotifications = () => {
       >
         <FaBell className="text-xl" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -90,28 +72,18 @@ const AdminNotifications = () => {
         <div className="absolute right-0 mt-2 w-96 glass rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <h3 className="text-white font-semibold">Notifications</h3>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button 
-                  onClick={markAllAsRead}
-                  className="text-white/40 text-xs hover:text-white transition-colors"
-                >
-                  Mark all read
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button 
-                  onClick={clearAll}
-                  className="text-red-400 text-xs hover:text-red-300 transition-colors"
-                >
-                  <FaTrash className="text-xs" />
-                </button>
-              )}
-            </div>
+            {unreadCount > 0 && (
+              <button 
+                onClick={markAllAsRead}
+                className="text-white/40 text-xs hover:text-white transition-colors"
+              >
+                Mark all read
+              </button>
+            )}
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="text-white/40 text-sm text-center py-8">No notifications</p>
+              <p className="text-white/40 text-sm text-center py-4">No notifications</p>
             ) : (
               notifications.map((notif) => (
                 <div 
@@ -122,11 +94,11 @@ const AdminNotifications = () => {
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex-shrink-0">
+                    <div className="mt-0.5">
                       {getIcon(notif.action)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{notif.taskTitle || 'Task'}</p>
+                      <p className="text-white text-sm font-medium">{notif.taskTitle}</p>
                       <p className="text-white/60 text-xs mt-0.5">{notif.action}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-white/30 text-[10px]">by {notif.user || 'Worker'}</span>
@@ -135,7 +107,7 @@ const AdminNotifications = () => {
                       </div>
                     </div>
                     {!notif.read && (
-                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1 animate-pulse" />
+                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
                     )}
                   </div>
                 </div>

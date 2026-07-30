@@ -10,13 +10,13 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaBell,
   FaMoon,
   FaSun
 } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/slices/authSlice';
 import toast from 'react-hot-toast';
+import AdminNotifications from '../components/common/AdminNotifications';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -25,14 +25,13 @@ const AdminLayout = () => {
   const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Dark mode state - get from localStorage
+  // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Apply theme class to body
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.remove('light-mode');
@@ -109,6 +108,9 @@ const AdminLayout = () => {
               >
                 <item.icon className="text-lg" />
                 <span className="font-medium">{item.label}</span>
+                {isActive && (
+                  <div className="ml-auto w-1 h-8 rounded-full bg-gradient-to-b from-blue-500 to-purple-500" />
+                )}
               </button>
             );
           })}
@@ -153,16 +155,20 @@ const AdminLayout = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <button className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 relative">
-                <FaBell className="text-xl" />
-              </button>
+              {/* Admin Notifications */}
+              <AdminNotifications />
+              
+              {/* Theme Toggle */}
               <button
                 onClick={toggleDarkMode}
                 className="text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
               >
                 {isDarkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
               </button>
-              <div className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
+
+              {/* User Profile */}
+              <div className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 cursor-pointer"
+                   onClick={() => navigate('/admin/settings')}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                   {user?.name?.charAt(0) || 'A'}
                 </div>

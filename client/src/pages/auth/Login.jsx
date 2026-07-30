@@ -50,10 +50,13 @@ const Login = () => {
       const result = await dispatch(login(formData)).unwrap();
       toast.success(`Welcome back, ${result.user.name}!`);
       
+      // Redirect based on role
       if (result.user.role === 'admin') {
         navigate('/admin');
-      } else {
+      } else if (result.user.role === 'worker') {
         navigate('/worker');
+      } else {
+        navigate('/');
       }
     } catch (error) {
       toast.error(error || 'Login failed. Please try again.');

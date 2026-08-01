@@ -46,17 +46,23 @@ const Workers = () => {
     isActive: true
   });
 
-  // Departments - with ability to add new ones
-  const [departments, setDepartments] = useState([
-    'Management',
-    'Design',
-    'Development',
-    'Marketing',
-    'HR',
-    'Finance',
-    'Operations',
-    'Sales'
-  ]);
+  // Departments
+  const [departments, setDepartments] = useState(() => {
+    const saved = localStorage.getItem('departments');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [
+      'Management',
+      'Design',
+      'Development',
+      'Marketing',
+      'HR',
+      'Finance',
+      'Operations',
+      'Sales'
+    ];
+  });
 
   // Department colors
   const deptColors = {
@@ -73,89 +79,121 @@ const Workers = () => {
     'Administration': '#F59E0B'
   };
 
-  // Sample workers data
+  // Load workers from localStorage
   useEffect(() => {
-    const sampleWorkers = [
-      {
-        id: 1,
-        name: 'Ahmed Ali',
-        email: 'ahmed@hammedia.com',
-        employeeId: 'EMP-001',
-        department: 'Design',
-        position: 'UI/UX Designer',
-        phone: '+971 50 123 4567',
-        isActive: true,
-        joinDate: '2024-01-15',
-        tasksCompleted: 12,
-        tasksAssigned: 18,
-        avatar: 'A'
-      },
-      {
-        id: 2,
-        name: 'Fathima Noor',
-        email: 'fathima@hammedia.com',
-        employeeId: 'EMP-002',
-        department: 'Development',
-        position: 'Full Stack Developer',
-        phone: '+971 50 234 5678',
-        isActive: true,
-        joinDate: '2024-02-01',
-        tasksCompleted: 8,
-        tasksAssigned: 15,
-        avatar: 'F'
-      },
-      {
-        id: 3,
-        name: 'Mohamed Rashid',
-        email: 'mohamed@hammedia.com',
-        employeeId: 'EMP-003',
-        department: 'Marketing',
-        position: 'Marketing Manager',
-        phone: '+971 50 345 6789',
-        isActive: false,
-        joinDate: '2023-11-01',
-        tasksCompleted: 5,
-        tasksAssigned: 10,
-        avatar: 'M'
-      },
-      {
-        id: 4,
-        name: 'Sara Ahmed',
-        email: 'sara@hammedia.com',
-        employeeId: 'EMP-004',
-        department: 'HR',
-        position: 'HR Manager',
-        phone: '+971 50 456 7890',
-        isActive: true,
-        joinDate: '2024-03-01',
-        tasksCompleted: 3,
-        tasksAssigned: 6,
-        avatar: 'S'
-      },
-      {
-        id: 5,
-        name: 'Ali Hassan',
-        email: 'ali@hammedia.com',
-        employeeId: 'EMP-005',
-        department: 'Development',
-        position: 'Frontend Developer',
-        phone: '+971 50 567 8901',
-        isActive: true,
-        joinDate: '2024-04-15',
-        tasksCompleted: 15,
-        tasksAssigned: 20,
-        avatar: 'A'
-      }
-    ];
-    setWorkers(sampleWorkers);
+    const savedWorkers = localStorage.getItem('workersList');
+    if (savedWorkers) {
+      setWorkers(JSON.parse(savedWorkers));
+    } else {
+      const sampleWorkers = [
+        {
+          id: 1,
+          name: 'Ahmed Ali',
+          email: 'ahmed@hammedia.com',
+          employeeId: 'EMP-001',
+          department: 'Design',
+          position: 'UI/UX Designer',
+          phone: '+971 50 123 4567',
+          isActive: true,
+          joinDate: '2024-01-15',
+          tasksCompleted: 12,
+          tasksAssigned: 18,
+          avatar: 'A'
+        },
+        {
+          id: 2,
+          name: 'Fathima Noor',
+          email: 'fathima@hammedia.com',
+          employeeId: 'EMP-002',
+          department: 'Development',
+          position: 'Full Stack Developer',
+          phone: '+971 50 234 5678',
+          isActive: true,
+          joinDate: '2024-02-01',
+          tasksCompleted: 8,
+          tasksAssigned: 15,
+          avatar: 'F'
+        },
+        {
+          id: 3,
+          name: 'Mohamed Rashid',
+          email: 'mohamed@hammedia.com',
+          employeeId: 'EMP-003',
+          department: 'Marketing',
+          position: 'Marketing Manager',
+          phone: '+971 50 345 6789',
+          isActive: false,
+          joinDate: '2023-11-01',
+          tasksCompleted: 5,
+          tasksAssigned: 10,
+          avatar: 'M'
+        },
+        {
+          id: 4,
+          name: 'Sara Ahmed',
+          email: 'sara@hammedia.com',
+          employeeId: 'EMP-004',
+          department: 'HR',
+          position: 'HR Manager',
+          phone: '+971 50 456 7890',
+          isActive: true,
+          joinDate: '2024-03-01',
+          tasksCompleted: 3,
+          tasksAssigned: 6,
+          avatar: 'S'
+        },
+        {
+          id: 5,
+          name: 'Ali Hassan',
+          email: 'ali@hammedia.com',
+          employeeId: 'EMP-005',
+          department: 'Development',
+          position: 'Frontend Developer',
+          phone: '+971 50 567 8901',
+          isActive: true,
+          joinDate: '2024-04-15',
+          tasksCompleted: 15,
+          tasksAssigned: 20,
+          avatar: 'A'
+        }
+      ];
+      setWorkers(sampleWorkers);
+      localStorage.setItem('workersList', JSON.stringify(sampleWorkers));
+      updateMeetingDropdown(sampleWorkers);
+    }
   }, []);
+
+  // Save departments to localStorage
+  useEffect(() => {
+    localStorage.setItem('departments', JSON.stringify(departments));
+  }, [departments]);
+
+  // Update meeting dropdown
+  const updateMeetingDropdown = (workersList) => {
+    const workerNames = workersList.map(w => ({
+      id: w.id,
+      name: w.name,
+      email: w.email,
+      department: w.department,
+      isActive: w.isActive
+    }));
+    localStorage.setItem('workers', JSON.stringify(workerNames));
+  };
+
+  // Sync workers to meeting dropdown whenever workers change
+  useEffect(() => {
+    if (workers.length > 0) {
+      updateMeetingDropdown(workers);
+    }
+  }, [workers]);
 
   // Handle add department
   const handleAddDepartment = () => {
     if (newDepartment && newDepartment.trim()) {
       const deptName = newDepartment.trim();
       if (!departments.includes(deptName)) {
-        setDepartments(prev => [...prev, deptName]);
+        const updatedDepartments = [...departments, deptName];
+        setDepartments(updatedDepartments);
         toast.success(`Department "${deptName}" added!`);
         setNewDepartment('');
         setShowDepartmentModal(false);
@@ -182,7 +220,10 @@ const Workers = () => {
       tasksAssigned: 0,
       avatar: formData.name.charAt(0).toUpperCase()
     };
-    setWorkers(prev => [...prev, newWorker]);
+    const updatedWorkers = [...workers, newWorker];
+    setWorkers(updatedWorkers);
+    localStorage.setItem('workersList', JSON.stringify(updatedWorkers));
+    updateMeetingDropdown(updatedWorkers);
     toast.success('Worker added successfully!');
     setShowAddModal(false);
     resetForm();
@@ -191,11 +232,14 @@ const Workers = () => {
   // Handle edit worker
   const handleEditWorker = (e) => {
     e.preventDefault();
-    setWorkers(prev => prev.map(worker => 
+    const updatedWorkers = workers.map(worker => 
       worker.id === selectedWorker.id 
         ? { ...worker, ...formData }
         : worker
-    ));
+    );
+    setWorkers(updatedWorkers);
+    localStorage.setItem('workersList', JSON.stringify(updatedWorkers));
+    updateMeetingDropdown(updatedWorkers);
     toast.success('Worker updated successfully!');
     setShowEditModal(false);
     setSelectedWorker(null);
@@ -205,18 +249,24 @@ const Workers = () => {
   // Handle delete worker
   const handleDeleteWorker = (id) => {
     if (window.confirm('Are you sure you want to delete this worker?')) {
-      setWorkers(prev => prev.filter(worker => worker.id !== id));
+      const updatedWorkers = workers.filter(worker => worker.id !== id);
+      setWorkers(updatedWorkers);
+      localStorage.setItem('workersList', JSON.stringify(updatedWorkers));
+      updateMeetingDropdown(updatedWorkers);
       toast.success('Worker deleted successfully');
     }
   };
 
   // Toggle worker status
   const toggleWorkerStatus = (id) => {
-    setWorkers(prev => prev.map(worker => 
+    const updatedWorkers = workers.map(worker => 
       worker.id === id 
         ? { ...worker, isActive: !worker.isActive }
         : worker
-    ));
+    );
+    setWorkers(updatedWorkers);
+    localStorage.setItem('workersList', JSON.stringify(updatedWorkers));
+    updateMeetingDropdown(updatedWorkers);
     toast.success('Worker status updated');
   };
 
@@ -260,14 +310,13 @@ const Workers = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header - Removed Export button */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Workers Management</h1>
           <p className="text-white/40 text-sm">Manage your team members</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Removed Export button */}
           <button 
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 text-sm"
@@ -356,13 +405,10 @@ const Workers = () => {
             value={filterDepartment}
             onChange={(e) => setFilterDepartment(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-            style={{ color: '#ffffff' }}
           >
-            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Departments</option>
+            <option value="all">All Departments</option>
             {departments.map(dept => (
-              <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                {dept}
-              </option>
+              <option key={dept} value={dept}>{dept}</option>
             ))}
           </select>
 
@@ -370,11 +416,10 @@ const Workers = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 bg-gray-800/80 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[130px]"
-            style={{ color: '#ffffff' }}
           >
-            <option value="all" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>All Status</option>
-            <option value="active" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Active</option>
-            <option value="inactive" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Inactive</option>
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
 
           <button 
@@ -693,14 +738,11 @@ const Workers = () => {
                           value={formData.department}
                           onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                           className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{ color: '#ffffff' }}
                           required
                         >
-                          <option value="" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Select</option>
+                          <option value="">Select</option>
                           {departments.map(dept => (
-                            <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                              {dept}
-                            </option>
+                            <option key={dept} value={dept}>{dept}</option>
                           ))}
                         </select>
                         <button
@@ -822,13 +864,10 @@ const Workers = () => {
                           value={formData.department}
                           onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                           className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{ color: '#ffffff' }}
                           required
                         >
                           {departments.map(dept => (
-                            <option key={dept} value={dept} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                              {dept}
-                            </option>
+                            <option key={dept} value={dept}>{dept}</option>
                           ))}
                         </select>
                         <button

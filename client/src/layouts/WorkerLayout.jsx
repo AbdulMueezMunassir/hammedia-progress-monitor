@@ -23,7 +23,7 @@ const WorkerLayout = () => {
   const { user } = useSelector((state) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Dark mode state
+  // Dark mode state - loaded from localStorage
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FaBell, FaTimes, FaCheckCircle, FaComment, FaPaperclip, FaPlay, FaPause } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheckCircle, FaComment, FaPaperclip, FaPlay, FaPause, FaTrash, FaCheckDouble } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
+import toast from 'react-hot-toast';
 
 const AdminNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -9,8 +10,8 @@ const AdminNotifications = () => {
 
   useEffect(() => {
     loadNotifications();
-    // Check for new notifications every 5 seconds
-    const interval = setInterval(loadNotifications, 5000);
+    // Check for new notifications every 3 seconds
+    const interval = setInterval(loadNotifications, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -27,6 +28,7 @@ const AdminNotifications = () => {
     localStorage.setItem('adminNotifications', JSON.stringify(updated));
     setNotifications(updated);
     setUnreadCount(updated.filter(n => !n.read).length);
+    toast.success('Notification marked as read');
   };
 
   const markAllAsRead = () => {
@@ -37,12 +39,29 @@ const AdminNotifications = () => {
     toast.success('All notifications marked as read');
   };
 
+  const clearAll = () => {
+    if (window.confirm('Clear all notifications?')) {
+      localStorage.setItem('adminNotifications', JSON.stringify([]));
+      setNotifications([]);
+      setUnreadCount(0);
+      toast.success('All notifications cleared');
+    }
+  };
+
   const getIcon = (action) => {
-    if (action.includes('completed') || action.includes('Complete')) return <FaCheckCircle className="text-green-400" />;
-    if (action.includes('comment')) return <FaComment className="text-blue-400" />;
-    if (action.includes('attachment')) return <FaPaperclip className="text-purple-400" />;
-    if (action.includes('started')) return <FaPlay className="text-green-400" />;
-    if (action.includes('paused')) return <FaPause className="text-yellow-400" />;
+    const lowerAction = action.toLowerCase();
+    if (lowerAction.includes('complete') || lowerAction.includes('completed')) 
+      return <FaCheckCircle className="text-green-400" />;
+    if (lowerAction.includes('comment')) 
+      return <FaComment className="text-blue-400" />;
+    if (lowerAction.includes('attach') || lowerAction.includes('file')) 
+      return <FaPaperclip className="text-purple-400" />;
+    if (lowerAction.includes('start')) 
+      return <FaPlay className="text-green-400" />;
+    if (lowerAction.includes('pause')) 
+      return <FaPause className="text-yellow-400" />;
+    if (lowerAction.includes('progress')) 
+      return <FaPlay className="text-cyan-400" />;
     return <FaBell className="text-gray-400" />;
   };
 
@@ -54,6 +73,9 @@ const AdminNotifications = () => {
     }
   };
 
+  // Count unread notifications
+  const unreadNotifications = notifications.filter(n => !n.read);
+
   return (
     <div className="relative">
       <button
@@ -62,58 +84,92 @@ const AdminNotifications = () => {
       >
         <FaBell className="text-xl" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center animate-pulse">
             {unreadCount}
           </span>
         )}
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-96 glass rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-xl border border-gray-700 shadow-2xl z-50 overflow-hidden">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-700 flex items-center justify-between bg-gray-800">
             <h3 className="text-white font-semibold">Notifications</h3>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button 
+                  onClick={markAllAsRead}
+                  className="text-blue-400 text-xs hover:text-blue-300 transition-colors flex items-center gap-1"
+                >
+                  <FaCheckDouble className="text-xs" />
+                  Mark all read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button 
+                  onClick={clearAll}
+                  className="text-red-400 text-xs hover:text-red-300 transition-colors"
+                >
+                  <FaTrash className="text-xs" />
+                </button>
+              )}
               <button 
-                onClick={markAllAsRead}
-                className="text-white/40 text-xs hover:text-white transition-colors"
+                onClick={() => setShowDropdown(false)}
+                className="text-gray-400 hover:text-white transition-colors"
               >
-                Mark all read
+                <FaTimes className="text-sm" />
               </button>
-            )}
+            </div>
           </div>
-          <div className="max-h-80 overflow-y-auto">
+
+          {/* Notifications List */}
+          <div className="max-h-80 overflow-y-auto bg-gray-800/95">
             {notifications.length === 0 ? (
-              <p className="text-white/40 text-sm text-center py-4">No notifications</p>
+              <p className="text-gray-400 text-sm text-center py-8">No notifications</p>
             ) : (
               notifications.map((notif) => (
                 <div 
                   key={notif.id}
                   onClick={() => markAsRead(notif.id)}
-                  className={`p-4 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 ${
-                    !notif.read ? 'bg-blue-500/5 border-l-2 border-l-blue-500' : ''
+                  className={`p-4 hover:bg-gray-700/50 transition-colors cursor-pointer border-b border-gray-700/50 ${
+                    !notif.read ? 'bg-blue-500/10 border-l-4 border-l-blue-500' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
+                    <div className="mt-0.5 flex-shrink-0">
                       {getIcon(notif.action)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium">{notif.taskTitle}</p>
-                      <p className="text-white/60 text-xs mt-0.5">{notif.action}</p>
+                      <p className="text-white text-sm font-medium truncate">{notif.taskTitle || 'Task'}</p>
+                      <p className="text-gray-300 text-xs mt-0.5">{notif.action}</p>
+                      {notif.details && (
+                        <p className="text-gray-500 text-[10px] mt-0.5 truncate">{notif.details}</p>
+                      )}
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-white/30 text-[10px]">by {notif.user || 'Worker'}</span>
-                        <span className="text-white/20 text-[10px]">•</span>
-                        <span className="text-white/20 text-[10px]">{getTimeAgo(notif.timestamp)}</span>
+                        <span className="text-gray-500 text-[10px]">by {notif.user || 'Worker'}</span>
+                        <span className="text-gray-600 text-[10px]">•</span>
+                        <span className="text-gray-500 text-[10px]">{getTimeAgo(notif.timestamp)}</span>
                       </div>
                     </div>
-                    {!notif.read && (
-                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
+                    {!notif.read ? (
+                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1 animate-pulse" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-gray-600 flex-shrink-0 mt-1" />
                     )}
                   </div>
                 </div>
               ))
             )}
           </div>
+
+          {/* Footer */}
+          {notifications.length > 0 && (
+            <div className="p-2 border-t border-gray-700 bg-gray-800/90 text-center">
+              <span className="text-gray-500 text-xs">
+                {unreadNotifications.length} unread • {notifications.length} total
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

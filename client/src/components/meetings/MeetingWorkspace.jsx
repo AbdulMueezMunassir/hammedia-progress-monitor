@@ -119,7 +119,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         id: 1,
         title: 'Envoy website launch',
         owner: 'Ahmed Ali',
-        status: 'stuck',
+        status: 'in-progress',
         dueDate: getDynamicDate(-14),
         priority: 'low',
         lastUpdated: 'Just now',
@@ -399,35 +399,74 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     }
   };
 
-  // ============= ESCALATION FUNCTIONS =============
+  // ============= ESCALATION FUNCTIONS - FIXED: Keep in source, add to target =============
   
   const handleEscalate = (taskId) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
+    // Check if task is already escalated
     if (task.escalatedTo) {
       toast.warning('Task is already escalated');
       return;
     }
 
+    // Determine target meeting (opposite of current)
     const targetMeeting = meetingType === 'F3' ? 'EXCO' : 'F3';
     
-    setTasks(prev => prev.map(t => 
-      t.id === taskId 
-        ? { 
-            ...t, 
-            escalatedTo: targetMeeting, 
-            escalatedFrom: meetingType,
-            lastUpdated: 'Just now' 
-          }
-        : t
-    ));
+    // Update the task in current meeting with escalation info (KEEP IT HERE)
+    const updatedTask = {
+      ...task,
+      escalatedTo: targetMeeting,
+      escalatedFrom: meetingType,
+      lastUpdated: 'Just now'
+    };
+    
+    // Update current meeting tasks (keep the task, just update its status)
+    const updatedCurrentTasks = tasks.map(t => 
+      t.id === taskId ? updatedTask : t
+    );
+    setTasks(updatedCurrentTasks);
+    localStorage.setItem(`meetingTasks_${meetingType}`, JSON.stringify(updatedCurrentTasks));
+    
+    // ALSO add/update the task in target meeting's storage
+    const targetMeetingTasks = JSON.parse(localStorage.getItem(`meetingTasks_${targetMeeting}`) || '[]');
+    
+    // Check if task already exists in target meeting (by id)
+    const existingIndex = targetMeetingTasks.findIndex(t => t.id === taskId);
+    if (existingIndex !== -1) {
+      // Update existing task
+      targetMeetingTasks[existingIndex] = {
+        ...updatedTask,
+        escalatedTo: targetMeeting,
+        escalatedFrom: meetingType
+      };
+    } else {
+      // Add new task
+      targetMeetingTasks.push({
+        ...updatedTask,
+        escalatedTo: targetMeeting,
+        escalatedFrom: meetingType
+      });
+    }
+    localStorage.setItem(`meetingTasks_${targetMeeting}`, JSON.stringify(targetMeetingTasks));
     
     toast.success(`✅ Task escalated to ${targetMeeting} meeting`);
   };
 
   const handleDeEscalate = (taskId) => {
-    setTasks(prev => prev.map(t => 
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const targetMeeting = task.escalatedTo;
+    
+    if (!targetMeeting) {
+      toast.warning('Task is not escalated');
+      return;
+    }
+
+    // Update current meeting: remove escalation
+    const updatedCurrentTasks = tasks.map(t => 
       t.id === taskId 
         ? { 
             ...t, 
@@ -436,7 +475,15 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
             lastUpdated: 'Just now' 
           }
         : t
-    ));
+    );
+    setTasks(updatedCurrentTasks);
+    localStorage.setItem(`meetingTasks_${meetingType}`, JSON.stringify(updatedCurrentTasks));
+    
+    // Remove from target meeting's storage
+    const targetMeetingTasks = JSON.parse(localStorage.getItem(`meetingTasks_${targetMeeting}`) || '[]');
+    const filteredTargetTasks = targetMeetingTasks.filter(t => t.id !== taskId);
+    localStorage.setItem(`meetingTasks_${targetMeeting}`, JSON.stringify(filteredTargetTasks));
+    
     toast.success('✅ Escalation removed');
   };
 
@@ -501,21 +548,15 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
       filtered = filtered.filter(task => task.status !== 'completed');
     }
 
+    // ESCALATION FILTERING - Show escalated tasks in both meetings
     if (showEscalated) {
-      filtered = filtered.filter(task => 
-        task.escalatedTo === meetingType || 
-        task.escalatedFrom === meetingType
-      );
+      // Show only tasks that are escalated
+      filtered = filtered.filter(task => task.escalatedTo !== null);
     } else {
-      filtered = filtered.filter(task => {
-        if (task.escalatedFrom === meetingType && task.escalatedTo !== null) {
-          return false;
-        }
-        if (task.escalatedTo === meetingType) {
-          return true;
-        }
-        return task.escalatedTo === null;
-      });
+      // Normal view: Show all tasks (including escalated ones)
+      // But show escalation indicators for tasks that are escalated
+      // No filtering needed - show all tasks with proper labels
+      filtered = filtered;
     }
 
     // Sort
@@ -558,7 +599,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
   const groupedTasks = getGroupedTasks();
   const totalTasks = tasks.length;
   const completedCount = tasks.filter(t => t.status === 'completed').length;
-  const escalatedCount = tasks.filter(t => t.escalatedTo === meetingType || t.escalatedFrom === meetingType).length;
+  const escalatedCount = tasks.filter(t => t.escalatedTo !== null).length;
 
   // ============= RENDER FUNCTIONS =============
 
@@ -622,6 +663,9 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
     return taskList.map((task) => {
       const isExpanded = expandedTasks[task.id] || false;
       const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+      const isEscalated = task.escalatedTo !== null;
+      const isEscalatedToThis = task.escalatedTo === meetingType;
+      const isEscalatedFromThis = task.escalatedFrom === meetingType && task.escalatedTo !== null;
 
       return (
         <React.Fragment key={task.id}>
@@ -643,14 +687,13 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
                   {isExpanded ? <FaMinusCircle className="text-xs" /> : <FaPlusCircle className="text-xs" />}
                 </button>
                 <span className="text-white font-medium text-sm">{task.title}</span>
-                {task.escalatedTo && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-400 font-medium">
-                    → {task.escalatedTo}
-                  </span>
-                )}
-                {task.escalatedFrom && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-orange-500/20 text-orange-400 font-medium">
-                    ↑ from {task.escalatedFrom}
+                {isEscalated && (
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    task.escalatedTo === meetingType 
+                      ? 'bg-green-500/20 text-green-400' 
+                      : 'bg-purple-500/20 text-purple-400'
+                  }`}>
+                    {task.escalatedTo === meetingType ? `↑ Escalated to ${meetingType}` : `→ ${task.escalatedTo}`}
                   </span>
                 )}
               </div>
@@ -682,7 +725,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
             <td className="py-2 px-3 text-gray-400 text-sm">{task.lastUpdated}</td>
             <td className="py-2 px-3 text-gray-400 text-sm max-w-[100px] truncate">{task.description}</td>
             <td className="py-2 px-3">
-              {!task.escalatedTo ? (
+              {!isEscalated ? (
                 <button 
                   onClick={() => handleEscalate(task.id)}
                   className="px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors text-sm flex items-center gap-1"
@@ -850,7 +893,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
             }`}
           >
             <FaArrowUp className="text-sm" />
-            {showEscalated ? 'All' : 'Escalated'} ({escalatedCount})
+            {showEscalated ? 'Escalated' : 'All'} ({escalatedCount})
           </button>
           
           <div className="flex-1" />
@@ -1044,7 +1087,7 @@ const MeetingWorkspace = ({ meetingType = 'F3' }) => {
         </div>
       )}
 
-      {/* Edit Modal - Handles both Task and Subtask */}
+      {/* Edit Modal */}
       {showEditModal && (editingTask || editingSubtask) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-gray-800 rounded-xl p-5 w-full max-w-md border border-gray-700">

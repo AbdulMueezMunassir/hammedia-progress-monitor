@@ -18,7 +18,8 @@ import {
   FaUsers,
   FaChevronDown,
   FaChevronRight,
-  FaPlusCircle
+  FaPlusCircle,
+  FaMinusCircle
 } from 'react-icons/fa';
 import GlassCard from '../../components/common/GlassCard';
 import toast from 'react-hot-toast';
@@ -46,7 +47,7 @@ const Workers = () => {
     isActive: true
   });
 
-  // Departments
+  // Departments - stored in localStorage
   const [departments, setDepartments] = useState(() => {
     const saved = localStorage.getItem('departments');
     if (saved) {
@@ -78,6 +79,11 @@ const Workers = () => {
     'IT': '#8B5CF6',
     'Administration': '#F59E0B'
   };
+
+  // Save departments to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('departments', JSON.stringify(departments));
+  }, [departments]);
 
   // Load workers from localStorage
   useEffect(() => {
@@ -163,11 +169,6 @@ const Workers = () => {
     }
   }, []);
 
-  // Save departments to localStorage
-  useEffect(() => {
-    localStorage.setItem('departments', JSON.stringify(departments));
-  }, [departments]);
-
   // Update meeting dropdown
   const updateMeetingDropdown = (workersList) => {
     const workerNames = workersList.map(w => ({
@@ -187,6 +188,8 @@ const Workers = () => {
     }
   }, [workers]);
 
+  // ============= DEPARTMENT HANDLERS =============
+  
   // Handle add department
   const handleAddDepartment = () => {
     if (newDepartment && newDepartment.trim()) {
@@ -205,6 +208,23 @@ const Workers = () => {
     }
   };
 
+  // Handle remove department
+  const handleRemoveDepartment = (deptName) => {
+    if (window.confirm(`Are you sure you want to remove "${deptName}" department?`)) {
+      // Check if any worker is assigned to this department
+      const workersInDept = workers.filter(w => w.department === deptName);
+      if (workersInDept.length > 0) {
+        toast.error(`Cannot remove "${deptName}". ${workersInDept.length} worker(s) are assigned to this department.`);
+        return;
+      }
+      const updatedDepartments = departments.filter(d => d !== deptName);
+      setDepartments(updatedDepartments);
+      toast.success(`Department "${deptName}" removed!`);
+    }
+  };
+
+  // ============= WORKER HANDLERS =============
+  
   // Handle add worker
   const handleAddWorker = (e) => {
     e.preventDefault();
@@ -563,7 +583,7 @@ const Workers = () => {
         ))}
       </div>
 
-      {/* Add Department Modal */}
+      {/* Add/Remove Department Modal */}
       <AnimatePresence>
         {showDepartmentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -577,7 +597,7 @@ const Workers = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white text-lg font-semibold flex items-center gap-2">
                     <FaBuilding className="text-purple-400" />
-                    Add New Department
+                    Manage Departments
                   </h3>
                   <button
                     onClick={() => {
@@ -591,21 +611,63 @@ const Workers = () => {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Add Department */}
                   <div>
-                    <label className="text-white/60 text-sm block mb-1">Department Name</label>
-                    <input
-                      type="text"
-                      value={newDepartment}
-                      onChange={(e) => setNewDepartment(e.target.value)}
-                      placeholder="e.g., E-commerce, IT, Administration"
-                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddDepartment();
-                        }
-                      }}
-                    />
+                    <label className="text-white/60 text-sm block mb-1">Add New Department</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newDepartment}
+                        onChange={(e) => setNewDepartment(e.target.value)}
+                        placeholder="e.g., E-commerce, IT, Administration"
+                        className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddDepartment();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={handleAddDepartment}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition-all flex items-center gap-2"
+                      >
+                        <FaPlus />
+                        Add
+                      </button>
+                    </div>
                     <p className="text-white/30 text-xs mt-1">Press Enter or click Add to save</p>
+                  </div>
+
+                  {/* Existing Departments with Remove Option */}
+                  <div className="pt-4 border-t border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-white/40 text-xs">Current Departments ({departments.length})</p>
+                      <span className="text-white/20 text-xs">Click ✕ to remove</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {departments.map((dept) => (
+                        <span 
+                          key={dept}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium group"
+                          style={{
+                            backgroundColor: `${deptColors[dept] || '#6B7280'}22`,
+                            color: deptColors[dept] || '#6B7280'
+                          }}
+                        >
+                          {dept}
+                          <button
+                            onClick={() => handleRemoveDepartment(dept)}
+                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all"
+                            title={`Remove ${dept}`}
+                          >
+                            <FaTimes className="text-[10px]" />
+                          </button>
+                        </span>
+                      ))}
+                      {departments.length === 0 && (
+                        <p className="text-white/30 text-xs">No departments added yet</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-3">
@@ -616,34 +678,8 @@ const Workers = () => {
                       }}
                       className="flex-1 py-2 rounded-lg bg-gray-700 text-white/70 hover:bg-gray-600 transition-colors"
                     >
-                      Cancel
+                      Close
                     </button>
-                    <button
-                      onClick={handleAddDepartment}
-                      className="flex-1 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
-                    >
-                      <FaPlus />
-                      Add Department
-                    </button>
-                  </div>
-
-                  {/* Existing Departments */}
-                  <div className="mt-4 pt-4 border-t border-gray-700">
-                    <p className="text-white/40 text-xs mb-2">Current Departments ({departments.length})</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {departments.map((dept) => (
-                        <span 
-                          key={dept}
-                          className="px-2 py-0.5 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: `${deptColors[dept] || '#6B7280'}22`,
-                            color: deptColors[dept] || '#6B7280'
-                          }}
-                        >
-                          {dept}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -751,7 +787,7 @@ const Workers = () => {
                           className="px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
                           title="Add new department"
                         >
-                          <FaPlus />
+                          <FaPlusCircle className="text-sm" />
                         </button>
                       </div>
                     </div>
@@ -876,7 +912,7 @@ const Workers = () => {
                           className="px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
                           title="Add new department"
                         >
-                          <FaPlus />
+                          <FaPlusCircle className="text-sm" />
                         </button>
                       </div>
                     </div>
